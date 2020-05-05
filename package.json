@@ -3,10 +3,11 @@
     "redis": "^3.0.2",
     "restify": "^8.5.1"
   },
-  "dev-dependencies": {
+  "devDependencies": {
     "simple-server": "^1.1.1"
   },
   "scripts": {
-    "start": "node main.js"
+    "rtl_433": "i3-sensible-terminal -e rtl_433 -F syslog:127.0.0.1:1433 -M newmodel&",
+    "start": "yarn rtl_433; node main.js"
   }
 }
