@@ -57,11 +57,17 @@ const db = {
 
   async devices() {
     const devices = await keys('latest.*');
+    const subscribed = await smembers('devices');
     const result = await mget.apply(null, devices);
     const data = result
           .filter( item => !!item)
           .map( item => JSON.parse(item))
-          .reduce((acc, item) => ({ ...acc, [item.key]: item}), {});
+          .reduce((acc, item) => ({
+            ...acc,
+            [item.key]: {
+              ...item,
+              subscribed: subscribed.includes(item.key)
+            }}), {});
     return data;
   },
 
