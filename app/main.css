@@ -1,0 +1,14 @@
+.deviceEntry {
+    border: 2px solid black;
+    border-radius: 1em;
+    display: block;
+}
+#deviceManager {
+    width: 20%;;
+    float: left;
+}
+#chart {
+    width: 70%;
+    height: 400;
+    float: right;
+}

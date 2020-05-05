@@ -1,5 +1,6 @@
 
 const BASE = 'http://localhost:8080'
+let subscribed = [];
 
 async function getDevices() {
   const response = await fetch(`${BASE}/devices`);
@@ -16,31 +17,40 @@ async function getReadings(device) {
 function renderDeviceManager(devices) {
   const container = document.querySelector('#deviceManager ul');
   const template = document.querySelector('#deviceEntryTemplate').innerHTML;
-  const rendered = Object.values(devices).map(view =>   Mustache.render(template, view) ).join('\n');
+  const rendered = Object.values(devices).map(view =>   Mustache.render(template, {...view, age: moment(new Date(view.time)).fromNow()}) ).join('\n');
   container.innerHTML = rendered;
   
 }
 
-function handleSubscribtion(device, unsubscribe) {
+async function handleSubscribtion(device, unsubscribe) {
   if(unsubscribe)
-    return fetch(`${BASE}/unsubscribe/${device}`, {method: 'PUT'});
-  return fetch(`${BASE}/subscribe/${device}`, {method: 'PUT'});
+    await fetch(`${BASE}/unsubscribe/${device}`, {method: 'PUT'});
+  else
+    await fetch(`${BASE}/subscribe/${device}`, {method: 'PUT'});
+  updateDeviceManager();
   
 }
-
-window.onload = async function() {
+async function updateDeviceManager() {
   const devices = await getDevices();
   renderDeviceManager(devices);
-  // const datasets = await Promise.all(devices.map( async device => {
-  //   const data = await getReadings(device);
-  //   return  {
-  //     label: device,
-  //     data: data.reduce((acc, reading, index) => [...acc, {
-  //       y: reading.temperature_C,
-  //       x: new Date(reading.time)
-  //     }], []),
-  //   };
-  // }));
-  // drawChart(datasets, [1,2,3,4,5,6,7,8], );
-  
+  subscribed = Object.values(devices).filter( item => !!item.subscribed).map( item => item.key);
 };
+
+async function updateChart() {
+  const data = await Promise.all(subscribed.map( key => getReadings(key) ));
+  const container = document.getElementById('chart');
+  var items = data.reduce((acc, device) => {
+    const group = device[0].key || device[0].id;
+    return [ ...acc, ...device.map( ({time, temperature_C:temp}) => ({x: new Date(time), y: temp, group}))];
+  }, []);
+  console.log(items);
+  var dataset = new vis.DataSet(items);
+  var graph2d = new vis.Graph2d(container, dataset);
+}
+
+async function main() {
+  await updateDeviceManager();
+  await updateChart();
+}
+
+window.onload = main

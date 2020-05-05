@@ -1,32 +1,43 @@
 <html>
   <head>
-    <script src="./vendor/Chart.bundle.min.js"> </script>
+    <script src="./vendor/vis-timeline-graph2d.min.js"> </script>
+    <link rel="stylesheet" type="text/css" href="./vendor/vis-timeline-graph2d.min.css">
     <script src="./vendor/mustache.min.js"> </script>
+    <script src="./vendor/moment.js"> </script>
+    <script src='./index.js'> </script>
+    <link rel="stylesheet" type="text/css" href="./main.css">
     <script id="deviceEntryTemplate" type="x-tmpl-mustache">
+
       <li class='deviceEntry' onclick="handleSubscribtion('{{key}}', {{subscribed}})">
-        <h3>{{key}}{{#subscribed}} <span style="color:green">Subscribed</span>{{/subscribed}}</h3>
-        <span>{{model}}</span>
-        {{#temperature_C}}
-        <span>Temp: {{temperature_C}} `C</span>
-        {{/temperature_C}}
-        {{#temperature_F}}
-        <span>Temp: {{temperature_F}} `C</span>
-        {{/temperature_F}}
-        {{#humidity}}
-        <span>Humidity: {{humidity}} `C</span>
-        {{/humidity}}
+        <h3>{{key}}{{#subscribed}} <small style="color:green">Subscribed</small>{{/subscribed}}</h3>
+        <div>
+          <span style="color:blue">{{model}}</span>
+          {{#temperature_C}}
+          <span>Temp: {{temperature_C}} `C</span>
+          {{/temperature_C}}
+          {{#temperature_F}}
+          <span>Temp: {{temperature_F}} `C</span>
+          {{/temperature_F}}
+          {{#humidity}}
+          <span>Humidity: {{humidity}} `C</span>
+          {{/humidity}}
+        </div>
+        <div>
+          <small style="color:red">last seen: {{age}}</small>
+        </div>
       </li>
+
     </script>
   </head>
   <body>
+
     <div id="deviceManager">
       <ul class="devices">
       </ul>
     </div>
-    <div style="width:800px;height:800px">
-      <canvas id="myChart"></canvas>
+
+    <div id="chart">
     </div>
-    <script src='./index.js'>
-    </script>
+
   </body>
 </html>
