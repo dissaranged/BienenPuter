@@ -14,9 +14,10 @@ server.put('/subscribe/:device', async function(req, res, next) {
     next();
   } catch(e){
     console.error(e);
-    next(new InternalServerError(e));
+    next(e);
   }
 });
+
 server.put('/unsubscribe/:device', async function(req, res, next) {
   try {
     const result = await db.unsubscribe(req.params.device);
@@ -24,7 +25,7 @@ server.put('/unsubscribe/:device', async function(req, res, next) {
     next();
   } catch(e){
     console.error(e);
-    next(new InternalServerError(e));
+    next(e);
   }
 });
 
@@ -35,7 +36,7 @@ server.get('/devices', async function(req, res, next) {
     next();
   } catch(e) {
     console.error(e);
-    next(new InternalServerError(e));
+    next(e);
   }
 });
 

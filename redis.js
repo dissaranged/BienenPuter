@@ -57,8 +57,8 @@ const db = {
 
   async devices() {
     const devices = await keys('latest.*');
-    const response = await mget.apply(null, devices);
-    const data = response
+    const result = await mget.apply(null, devices);
+    const data = result
           .filter( item => !!item)
           .map( item => JSON.parse(item))
           .reduce((acc, item) => ({ ...acc, [item.key]: item}), {});
