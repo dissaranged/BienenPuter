@@ -62,18 +62,17 @@ server.get('/device/:name', async function(req, res, next) {
 });
 
 // # configure server
+// cors allow all!!
+server.opts('*', function optionsRoute(req, res, next) {
+  res.send(200);
+  return next();
+});
 server.use(
   function crossOrigin(req, res, next) {
     res.header('Access-Control-Allow-Origin', '*');
-    res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,PATCH,OPTIONS');
-    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Content-Length, X-Requested-With');
-    //allow preflight
-    if (req.method === 'OPTIONS') {
-      res.send(200);
-      next();
-    } else {
-      next();
-    }
+    res.header('Access-Control-Allow-Methods', '*');
+    res.header('Access-Control-Allow-Headers', '*');
+    next();
 });
 
 server.listen(8080, function() {
