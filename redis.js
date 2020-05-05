@@ -7,10 +7,12 @@ client.on("error", function(error) {
 
 const { promisify } = require("util");
 const set = promisify(client.set).bind(client);
+const keys = promisify(client.keys).bind(client);
 const get = promisify(client.get).bind(client);
 const mget = promisify(client.mget).bind(client);
 const zadd = promisify(client.zadd).bind(client);
 const sadd = promisify(client.sadd).bind(client);
+const srem = promisify(client.srem).bind(client);
 const smembers = promisify(client.smembers).bind(client);
 const exists = promisify(client.exists).bind(client);
 const zrangebyscore = promisify(client.zrangebyscore).bind(client);
@@ -30,24 +32,39 @@ function batch(chain) {
 
 const db = {
   redis: client,
-  storeReading(data) {
-    console.log('storeing :', data);
-    return batch(
-      client.multi()
-        .zadd(`readings.${data.key}`, new Date(data.time).valueOf(), JSON.stringify(data))
-        .sadd('devices', data.key)
-        .set(`latest.${data.key}`, JSON.stringify(data))
-    );
+
+  subscribe(device) {
+    console.log(`subscribing : ${device}`);
+    return sadd('devices', device);
   },
+
+  unsubscribe(device) {
+    console.log(`unsubscribing : ${device}`);
+    return srem('devices', device);
+  },
+
+  async storeReading(data) {
+    console.log('storeing :', data);
+    const subscribed = await smembers('devices');
+    if(subscribed.includes(data.key))
+      return batch(
+        client.multi()
+          .zadd(`readings.${data.key}`, new Date(data.time).valueOf(), JSON.stringify(data))
+          .set(`latest.${data.key}`, JSON.stringify(data))
+      );
+    return set(`latest.${data.key}`, JSON.stringify(data));
+  },
+
   async devices() {
-    const devices = await smembers('devices');
-    const response = await mget.apply(null, devices.map( t => `latest.${t}`));
+    const devices = await keys('latest.*');
+    const response = await mget.apply(null, devices);
     const data = response
           .filter( item => !!item)
           .map( item => JSON.parse(item))
           .reduce((acc, item) => ({ ...acc, [item.key]: item}), {});
     return data;
   },
+
   async getReadings(opts) {
     const {device, since, until} = opts;
     const newerThan = since ? new Date(Date.now()-since*60*1000).valueOf() : 0; // timestamp is in millieseconds here(should be seconds I think)

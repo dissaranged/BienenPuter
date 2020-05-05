@@ -7,6 +7,27 @@ var server = restify.createServer();
 rtl.start();
 
 // # routes
+server.put('/subscribe/:device', async function(req, res, next) {
+  try {
+    const result = await db.subscribe(req.params.device);
+    res.send(200);
+    next();
+  } catch(e){
+    console.error(e);
+    next(new InternalServerError(e));
+  }
+});
+server.put('/unsubscribe/:device', async function(req, res, next) {
+  try {
+    const result = await db.unsubscribe(req.params.device);
+    res.send(200);
+    next();
+  } catch(e){
+    console.error(e);
+    next(new InternalServerError(e));
+  }
+});
+
 server.get('/devices', async function(req, res, next) {
   try {
     const result = await db.devices();
@@ -17,6 +38,7 @@ server.get('/devices', async function(req, res, next) {
     next(new InternalServerError(e));
   }
 });
+
 server.get('/device/:name', async function(req, res, next) {
   try {
     const opts = {

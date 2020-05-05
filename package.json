@@ -1,7 +1,9 @@
 {
   "dependencies": {
     "redis": "^3.0.2",
-    "restify": "^8.5.1",
+    "restify": "^8.5.1"
+  },
+  "dev-dependencies": {
     "simple-server": "^1.1.1"
   },
   "scripts": {
