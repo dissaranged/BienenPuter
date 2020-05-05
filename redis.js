@@ -8,31 +8,54 @@ client.on("error", function(error) {
 const { promisify } = require("util");
 const set = promisify(client.set).bind(client);
 const get = promisify(client.get).bind(client);
+const mget = promisify(client.mget).bind(client);
 const zadd = promisify(client.zadd).bind(client);
 const sadd = promisify(client.sadd).bind(client);
 const smembers = promisify(client.smembers).bind(client);
 const exists = promisify(client.exists).bind(client);
 const zrangebyscore = promisify(client.zrangebyscore).bind(client);
 const exec = promisify(client.exec).bind(client);
+
+function batch(chain) {
+    return new Promise( function(resolve, reject) {
+      chain.exec(function(err, replies) {
+        if(err) {
+          reject(err);
+          return;
+        }
+        resolve(replies);  // can this still be failed due to responses?
+      });
+    });
+}
+
 const db = {
   redis: client,
-  storeReading: function(data) {
+  storeReading(data) {
     console.log('storeing :', data);
-    return new Promise( function(resolve, reject) {
+    return batch(
       client.multi()
         .zadd(`readings.${data.key}`, new Date(data.time).valueOf(), JSON.stringify(data))
         .sadd('devices', data.key)
         .set(`latest.${data.key}`, JSON.stringify(data))
-        .exec(function(err, replies) {
-          if(err) {
-            reject(err);
-            return;
-          }
-          resolve(replies);  // can this still be failed due to responses?
-        });
-    });
+    );
   },
-  zadd, sadd, smembers, exists, zrangebyscore,
+  async devices() {
+    const devices = await smembers('devices');
+    const response = await mget.apply(null, devices.map( t => `latest.${t}`));
+    const data = response
+          .filter( item => !!item)
+          .map( item => JSON.parse(item))
+          .reduce((acc, item) => ({ ...acc, [item.key]: item}), {});
+    return data;
+  },
+  async getReadings(opts) {
+    const {device, since, until} = opts;
+    const newerThan = since ? new Date(Date.now()-since*60*1000).valueOf() : 0; // timestamp is in millieseconds here(should be seconds I think)
+    const olderThan = until ? new Date(Date.now()-until*60*1000).valueOf() : '+inf';
+    const result = await zrangebyscore(`readings.${device}`, newerThan, olderThan);
+    return result.map(item => JSON.parse(item));
+  },
+  zadd, sadd, smembers, exists, zrangebyscore, batch
 };
 
 module.exports = db;

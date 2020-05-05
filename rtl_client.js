@@ -55,32 +55,4 @@ function createId(data) {
   return ret;
 }
 
-// fs.open('./db.json', 'r', (error, file) => {
-//   try {
-//     if(error){
-//       throw error;
-//     }
-//     client.db = JSON.parse(fs.readFileSync(file));
-//   } catch(e) {
-//     console.error(e);
-//   }
-// });  
-
-// function store(data) {
-//   const id = createId(data);
-//   db[id] = [ ...db[id]||[], data];
-//   fs.open('./db.json', 'w', (error, file) => {
-//   try {
-//     if(error){
-//       throw error;
-//     }
-//     fs.writeFileSync('db.json', JSON.stringify(db, null, 2));
-//   } catch(e) {
-//     console.error(e);
-//   }
-
-//   });  
-
-// }
-
 module.exports = client;

@@ -1,32 +1,44 @@
-const http = require('restify');
+const restify = require('restify');
+const { InternalServerError }  = require( 'restify-errors');
 const rtl = require('./rtl_client');
 const db = require('./redis');
-rtl.start();
-
-var restify = require('restify');
 
 var server = restify.createServer();
+rtl.start();
+
+// # routes
 server.get('/devices', async function(req, res, next) {
-  const result = await db.smembers('devices')
-  console.log(result);
-  res.send(result);
-  next();
+  try {
+    const result = await db.devices();
+    res.send(result);
+    next();
+  } catch(e) {
+    console.error(e);
+    next(new InternalServerError(e));
+  }
 });
 server.get('/device/:name', async function(req, res, next) {
-  const name = req.params.name;
-  const since = req.path.since || 24*60; // newer than since in minutes
-  if(await db.exists(`readings.${name}`)) {
-    if(since) {
-      const newerThan = new Date(Date.now()-since*60*1000).valueOf(); // timestamp is in millieseconds here
-      const data = await db.zrangebyscore(`readings.${name}`, since, '+inf');
+  try {
+    const opts = {
+      device: req.params.name,
+      since: req.path.since,
+      until: req.path.until,
+    };
+    if(await db.exists(`readings.${opts.device}`)) {
+      const data = await db.getReadings(opts);
       res.send(data);
+
+    } else {
+      res.send(404, 'Device Not Known');
     }
-  } else {
-    res.send(404, 'Device Not Known');
+    next();
+  } catch(e) {
+    console.error(e);
+    next(new InternalServerError(e));
   }
-  next();
 });
 
+// # configure server
 server.use(
   function crossOrigin(req,res,next){
     res.header("Access-Control-Allow-Origin", "*");
@@ -34,6 +46,7 @@ server.use(
     return next();
   }
 );
+
 server.listen(8080, function() {
   console.log('%s listening at %s', server.name, server.url);
 });
