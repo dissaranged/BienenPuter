@@ -46,6 +46,7 @@ async function updateDeviceManager() {
 function FtoC(f) {
   return (f- 32) * 5/9;
 }
+let tempGraph, humidGraph;
 
 async function createChart() {
   const data = await Promise.all(subscribed.map( key => getReadings(key) ));
@@ -90,10 +91,10 @@ async function createChart() {
       showMinorLabels: true,
     }
   };
-  const tempGraph = new vis.Graph2d(document.getElementById('tempChart'), temps, groups, opts);
+  tempGraph = new vis.Graph2d(document.getElementById('tempChart'), temps, groups, opts);
   tempGraph.setOptions({dataAxis: {left: { title: {  text: 'Temperature in °C)' }}}});
   const humids = new vis.DataSet(items.humids);
-  const humidGraph = new vis.Graph2d(document.getElementById('humidChart'), humids, groups, opts);
+  humidGraph = new vis.Graph2d(document.getElementById('humidChart'), humids, groups, opts);
   humidGraph.setOptions({dataAxis: {left: { title: {  text: 'Humidity in %)' }}}});
   return {temps, humids, groups};
 }
@@ -118,6 +119,9 @@ async function updateChart(datasets, time) {
              })
            )
   ));
+  console.log('intervall done');
+  tempGraph.setWindow(null, moment().add(15,'seconds'));
+  humidGraph.setWindow(null, moment().add(15,'seconds'));
 }
 
 async function main() {
