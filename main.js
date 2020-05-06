@@ -40,12 +40,12 @@ server.get('/devices', async function(req, res, next) {
   }
 });
 
-server.get('/device/:name', async function(req, res, next) {
+server.get('/device/:name', restify.plugins.queryParser(), async function(req, res, next) {
   try {
     const opts = {
       device: req.params.name,
-      since: req.path.since,
-      until: req.path.until,
+      since: req.query.since,
+      until: req.query.until,
     };
     if(await db.exists(`readings.${opts.device}`)) {
       const data = await db.getReadings(opts);

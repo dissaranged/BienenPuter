@@ -49,7 +49,7 @@ const db = {
     if(subscribed.includes(data.key))
       return batch(
         client.multi()
-          .zadd(`readings.${data.key}`, new Date(data.time).valueOf(), JSON.stringify(data))
+          .zadd(`readings.${data.key}`, Math.floor(new Date(data.time).valueOf()/1000), JSON.stringify(data))
           .set(`latest.${data.key}`, JSON.stringify(data))
       );
     return set(`latest.${data.key}`, JSON.stringify(data));
@@ -73,7 +73,7 @@ const db = {
 
   async getReadings(opts) {
     const {device, since, until} = opts;
-    const newerThan = since ? new Date(Date.now()-since*60*1000).valueOf() : 0; // timestamp is in millieseconds here(should be seconds I think)
+    const newerThan = since ? Math.floor(new Date(Date.now()-since*1000).valueOf()/1000) : 0;
     const olderThan = until ? new Date(Date.now()-until*60*1000).valueOf() : '+inf';
     const result = await zrangebyscore(`readings.${device}`, newerThan, olderThan);
     return result.map(item => JSON.parse(item));

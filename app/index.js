@@ -8,8 +8,8 @@ async function getDevices() {
   return data;
 }
 
-async function getReadings(device) {
-  const response = await fetch(`${BASE}/device/${device}`);
+async function getReadings(device, opts) {
+  const response = await fetch(`${BASE}/device/${device}?${opts&&opts.since ? `since=${opts.since}&`:''}`);
   if(response.status === 404)
     return [];
   const data = await response.json();
@@ -43,7 +43,7 @@ function FtoC(f) {
   return (f- 32) * 5/9;
 }
 
-async function updateChart(since) {
+async function createChart() {
   const data = await Promise.all(subscribed.map( key => getReadings(key, since) ));
   console.log(data);
   const items = {temps: [], humids: [], groups: []};
@@ -91,12 +91,40 @@ async function updateChart(since) {
   const humids = new vis.DataSet(items.humids);
   const humidGraph = new vis.Graph2d(document.getElementById('humidChart'), humids, groups, opts);
   humidGraph.setOptions({dataAxis: {left: { title: {  text: 'Humidity in %)' }}}});
+  return {temps, humids, groups};
+}
 
+async function updateChart(datasets, time) {
+  const since = Math.ceil((new Date() - time)/1000)+1;
+  await Promise.all(subscribed.map(
+    device => getReadings(device, {since})
+      .then( data =>
+             data.forEach( ({time, temperature_C, temperature_F, humidity, key}, index) => {
+               console.log(time, key)
+               const item = {x: new Date(time),  group: key};
+               const temp = temperature_C || (temperature_F ? FtoC(temperature_F) : null);
+               if(!temp && !humidity) {
+                 console.log(`Bad Reading for ${key}: `, device[index]);
+                 return;
+               }
+               if(temp)
+                 datasets.temps.add({...item, y: temp});
+               if(humidity)
+                 datasets.humids.add({...item, y: humidity});
+             })
+           )
+  ));
 }
 
 async function main() {
   await updateDeviceManager();
-  await updateChart();
+  const datasets = await createChart();
+  let lastInvocation = new Date();
+  setInterval(() => {
+    console.log('intervall', datasets, lastInvocation)
+    updateChart(datasets, lastInvocation);
+    lastInvocation = new Date();
+  }, 10*1000);
 }
 
 window.onload = main

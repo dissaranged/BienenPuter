@@ -9,6 +9,7 @@
   "scripts": {
     "rtl_433": "i3-sensible-terminal -e rtl_433 -F syslog:127.0.0.1:1433 -F kv -M newmodel -C si",
     "app": "npx simple-server app/",
-    "start": "yarn rtl_433& yarn app& node main.js"
+    "server": "node main.js",
+    "start": "yarn rtl_433& yarn app& yarn server"
   }
 }
