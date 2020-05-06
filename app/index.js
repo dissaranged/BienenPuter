@@ -19,7 +19,11 @@ async function getReadings(device, opts) {
 function renderDeviceManager(devices) {
   const container = document.querySelector('#deviceManager ul');
   const template = document.querySelector('#deviceEntryTemplate').innerHTML;
-  const rendered = Object.values(devices).map(view =>   Mustache.render(template, {...view, age: moment(new Date(view.time)).fromNow()}) ).join('\n');
+  const rendered = Object.values(devices)
+        .sort(({time:a}, {time:b}) => new Date(b) - new Date(a))
+        .map(view => Mustache.render(template, {
+          ...view, age: moment(new Date(view.time)).fromNow()
+        }) ).join('\n');
   container.innerHTML = rendered;
 
 }
@@ -44,7 +48,7 @@ function FtoC(f) {
 }
 
 async function createChart() {
-  const data = await Promise.all(subscribed.map( key => getReadings(key, since) ));
+  const data = await Promise.all(subscribed.map( key => getReadings(key) ));
   console.log(data);
   const items = {temps: [], humids: [], groups: []};
   const colors = ['red', 'green', 'blue', 'yellow', 'orange', 'violet']; // should be configurable
@@ -100,7 +104,7 @@ async function updateChart(datasets, time) {
     device => getReadings(device, {since})
       .then( data =>
              data.forEach( ({time, temperature_C, temperature_F, humidity, key}, index) => {
-               console.log(time, key)
+               console.log('New Sample arrived', time, key)
                const item = {x: new Date(time),  group: key};
                const temp = temperature_C || (temperature_F ? FtoC(temperature_F) : null);
                if(!temp && !humidity) {
