@@ -5,10 +5,9 @@
 }
 #deviceManager {
     width: 20%;;
+    margin: 2em;
     float: left;
 }
-#chart {
-    width: 70%;
-    height: 400;
-    float: right;
+.chart {
+    margin: 2em;;
 }

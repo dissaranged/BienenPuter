@@ -13,10 +13,10 @@
         <div>
           <span style="color:blue">{{model}}</span>
           {{#temperature_C}}
-          <span>Temp: {{temperature_C}} `C</span>
+          <span>Temp: {{temperature_C}} °C</span>
           {{/temperature_C}}
           {{#temperature_F}}
-          <span>Temp: {{temperature_F}} `F</span>
+          <span>Temp: {{temperature_F}} °F</span>
           {{/temperature_F}}
           {{#humidity}}
           <span>Humidity: {{humidity}} %</span>
@@ -36,7 +36,9 @@
       </ul>
     </div>
 
-    <div id="chart">
+    <div id="tempChart" class="chart">
+    </div>
+    <div id="humidChart" class="chart">
     </div>
 
   </body>
