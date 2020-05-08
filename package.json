@@ -4,12 +4,17 @@
     "restify": "^8.5.1"
   },
   "devDependencies": {
+    "chai": "^4.2.0",
+    "chai-http": "^4.3.0",
+    "mocha": "^7.1.2",
     "simple-server": "^1.1.1"
   },
   "scripts": {
-    "rtl_433": "i3-sensible-terminal -e rtl_433 -F syslog:127.0.0.1:1433 -F kv -M newmodel -C si",
+    "rtl_test": "rtl_test -p",
+    "rtl_433": "i3-sensible-terminal -e rtl_433 -F syslog:127.0.0.1:1433 -F kv -M newmodel -C si -p 40",
     "app": "npx simple-server app/",
     "server": "node main.js",
-    "start": "yarn rtl_433& yarn app& yarn server"
+    "start": "yarn rtl_433& yarn app& yarn server",
+    "test": "npx mocha --watch"
   }
 }
