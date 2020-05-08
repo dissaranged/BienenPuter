@@ -1,13 +1,18 @@
 .deviceEntry {
     border: 2px solid black;
     border-radius: 1em;
-    display: block;
 }
 #deviceManager {
     width: 20%;;
     margin: 2em;
-    float: left;
+    display: inline-block;
 }
 .chart {
     margin: 2em;;
+}
+
+.chartBox {
+    display: inline-block;
+    width: 70%;
+    float: right;
 }
