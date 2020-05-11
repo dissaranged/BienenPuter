@@ -6,6 +6,12 @@
   "devDependencies": {
     "chai": "^4.2.0",
     "chai-http": "^4.3.0",
+    "eslint": "^7.0.0",
+    "eslint-config-standard": "^14.1.1",
+    "eslint-plugin-import": "^2.20.2",
+    "eslint-plugin-node": "^11.1.0",
+    "eslint-plugin-promise": "^4.2.1",
+    "eslint-plugin-standard": "^4.0.1",
     "mocha": "^7.1.2",
     "simple-server": "^1.1.1"
   },
@@ -15,6 +21,7 @@
     "app": "npx simple-server app/",
     "server": "node main.js",
     "start": "yarn rtl_433& yarn app& yarn server",
-    "test": "npx mocha --watch"
+    "test": "npx mocha --watch",
+    "lint": "npx eslint ."
   }
 }
