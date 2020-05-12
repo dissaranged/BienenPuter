@@ -1,15 +1,44 @@
+const utils = {
 
-function isString (value) {
+  isString (value) {
     return (typeof value === 'string' || value instanceof String);
-}
+  },
 
-function toRedisResult (obj) {
+  toName(device, type) {
+    const name = escape(device);
+    switch(type){
+    case 'reading':
+      return `reading.${name}`;
+    case 'device':
+    default:
+      return `device.${name}`;
+    }
+  },
+
+  toRedisResult (obj) {
     return Object.entries(obj).reduce((acc, [key, value]) => ({
-        ...acc,
-        [key]: isString(value) ? value : JSON.stringify(value)
+      ...acc,
+      [key]: utils.isString(value) ? value : JSON.stringify(value)
     }), {});
-}
+  },
 
-module.exports = {
-    isString, toRedisResult
+  attemptJsonParse(str) {
+    try {
+      return JSON.parse(str);
+    } catch(e) {
+      if(e instanceof SyntaxError)
+        return str;
+      throw e;
+    }
+  },
+
+  fromRedisResult (obj) {
+    return Object.entries(obj).reduce((acc, [key, value]) => ({
+      ...acc,
+      [key]: utils.attemptJsonParse(value)
+    }), {});
+  },
+
 };
+
+module.exports = utils;
