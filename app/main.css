@@ -3,9 +3,15 @@
     border-radius: 1em;
 }
 #deviceManager {
-    width: 20%;;
+    max-width: 80%;
     margin: 2em;
     display: inline-block;
+}
+
+.showHideButton {
+    display: block;
+    margin-left:auto;
+    margin-right: 0px;
 }
 .chart {
     margin: 2em;;
@@ -15,4 +21,31 @@
     display: inline-block;
     width: 70%;
     float: right;
+}
+
+.tooltipContainer:hover .tooltip {
+    visibility: visible;
+    opacity: 1;
+}
+
+.tooltip {
+    visibility: hidden;
+    width: 20em;
+    background-color: #555;
+    color: #fff;
+    padding: 5px 0;
+    border-radius: 6px;
+
+    /* Position the tooltip text */
+    position: absolute;
+    z-index: 1;
+    margin-left: 60%;
+
+    /* Fade in tooltip */
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.hidden {
+    display: none;
 }

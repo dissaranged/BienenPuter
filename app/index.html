@@ -5,12 +5,26 @@
     <script src="./vendor/mustache.min.js"> </script>
     <script src="./vendor/moment.min.js"> </script>
     <script src='./index.js'> </script>
+    <script src='./deviceManager.js'> </script>
     <link rel="stylesheet" type="text/css" href="./main.css">
-    <script id="deviceEntryTemplate" type="x-tmpl-mustache">
 
-      <li class='deviceEntry' onclick="handleSubscribtion('{{key}}', {{subscribed}})">
-        <h3>{{key}}{{#subscribed}} <small style="color:green">Subscribed</small>{{/subscribed}}</h3>
+    <script id="deviceEntryTemplate" type="x-tmpl-mustache">
+      <li class='deviceEntry tooltipContainer'>
+        <div class="tooltip"><pre>{{JSON}}</pre></div>
+        <h3 listen="click=>handleSubscribe">{{key}}{{#subscribed}} <small style="color:green">Subscribed</small>{{/subscribed}}</h3>
+        <form>
+          <p>
+            <strong>Color : </strong>
+            <span style="color:{{color}}">{{color}}</span>
+          </p>
+          <p>
+            <label for="alias">Alias : </label>
+            <input type="text" name="alias" value="{{alias}}"></input>
+          </p>
+          <button listen="click=>saveOpts">Save!</button>
+        </form>
         <div>
+          {{#latest}}
           <span style="color:blue">{{model}}</span>
           {{#temperature_C}}
           <span>Temp: {{temperature_C}} °C</span>
@@ -21,17 +35,20 @@
           {{#humidity}}
           <span>Humidity: {{humidity}} %</span>
           {{/humidity}}
+          {{/latest}}
+          {{^latest}} <em> No Sample Data :( </em>{{/latest}}
         </div>
         <div>
-            <small style="color:red">last seen: {{age}}</small>
-            </div>
-            </li>
+          <small style="color:red">last seen: {{age}}</small>
+        </div>
+      </li>
+    </script>
 
-             </script>
   </head>
   <body>
 
     <div id="deviceManager">
+      <button class="showHideButton" onclick="document.querySelector('#deviceManager .devices').classList.toggle('hidden')"><em><<em></button>
       <ul class="devices">
       </ul>
     </div>
