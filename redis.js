@@ -110,8 +110,8 @@ const db = {
     if( !await client.exists(`readings.${device}`) ) {
       throw new NotFoundError('device not known');
     }
-    const newerThan = since ? Math.floor(new Date(Date.now() - since * 1000).valueOf() / 1000) : 0;
-    const olderThan = until ? new Date(Date.now() - until * 60 * 1000).valueOf() : '+inf';
+    const newerThan = since ? since.toString() : 0;
+    const olderThan = until ? until.toString() : '+inf';
     const result = await client.zrangebyscore(`readings.${device}`, newerThan, olderThan);
     return result.map(item => JSON.parse(item));
   },
