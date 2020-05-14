@@ -1,0 +1,17 @@
+.App {
+    background-color: #775517;
+    padding: 1em;
+}
+
+.App header {
+    background-color: #996823
+}
+
+.App .header {
+    background-color: #c199641a;
+}
+
+.btn {
+    font-size: small;
+    padding: 3px;
+}

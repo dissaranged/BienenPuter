@@ -1,5 +1,5 @@
 import React, {Component} from 'react';
-import {Container, Card, CardBody, CardHeader} from 'reactstrap';
+import {Col, Card, CardBody, CardHeader} from 'reactstrap';
 import { Graph2d } from 'vis-timeline/standalone';
 
 export default class Graph extends Component {
@@ -10,7 +10,6 @@ export default class Graph extends Component {
   }
   componentDidMount() {
     const { groups, dataset } = this.props;
-    console.log(dataset)
     const opts = {
       defaultGroup: 'ungrouped',
       legend: true,
@@ -23,19 +22,20 @@ export default class Graph extends Component {
       }
     };
 
-    const graph = new Graph2d(this.ref.current, dataset, groups, opts);
+    const graph = new Graph2d(this.ref.current, dataset, groups, opts)
+    console.log(graph)
   }
   render() {
     const {type} = this.props;
     return (
-      <Container>
+      <Col sm="12">
         <Card>
           <CardHeader><h2>{type}</h2></CardHeader>
           <CardBody>
             <div ref={this.ref}/>
           </CardBody>
         </Card>
-      </Container>
+      </Col>
     );
   }
 }

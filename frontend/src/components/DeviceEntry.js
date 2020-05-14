@@ -22,10 +22,10 @@ class DeviceEntry extends Component {
       <Card >
         <CardHeader onClick={this.handleSubscribe}>
           <Row>
-            <Col sm="8">{ alias || key }</Col> 
+            <Col sm="8">{ alias || key }</Col>
             { subscribed && (
               <Col sm="4">
-                <small style={{color:'green'}}>Subscribed</small> 
+                <small style={{color:'green'}}>Subscribed</small>
               </Col>
             )}
           </Row>
@@ -61,26 +61,36 @@ class DeviceEntry extends Component {
                 { latest ? (
                   <div >
                     <h5 style={{color:'blue'}}>{latest.model}</h5>
-                    { latest.temperature_C && <span>Temp: {latest.temperature_C} °C</span> }
-                    { latest.temperature_F && <span>Temp: {latest.temperature_F} °F</span> }            
-                    { latest.humidity && <span>Humidity: {latest.humidity} %</span> }
+                    { latest.temperature_C &&
+                      <Col>
+                        <span>Temp: {latest.temperature_C} °C</span>
+                      </Col>
+                    }
+                    { latest.temperature_F &&
+                      <Col>
+                        <span>Temp: {latest.temperature_F} °F</span>
+                      </Col>}
+                    { latest.humidity &&
+                      <Col>
+                        <span>Humidity: {latest.humidity} %</span>
+                      </Col>}
                   </div>
                 ) : <em> No Sample Data :( </em> }
               </div>
               <div>
                 <small style={{color:'red'}}>last seen: {age}</small>
-              </div>  
+              </div>
             </CardBody>
             <UncontrolledTooltip placement="right-end" autohide={false} target={this.tooltipTarget}>
               <pre align="left">{JSON.stringify(this.props.device, null, 2)}</pre>
             </UncontrolledTooltip>
           </Card>
-          
+
         </CardBody>
       </Card>
                 );
     }
-    
+
     handleAliasChange = ({target: {value}}) => this.setState({alias: value, hasChanged: true})
     handleColorChange = ({target: {value}}) => this.setState({color: value, hasChanged: true})
     handleOptionsSave = async () => {
@@ -91,9 +101,9 @@ class DeviceEntry extends Component {
     }
     handleSubscribe = async () => {
       await this.props.onSaveOptions(this.props.device.key, {subscribed: !this.props.device.subscribed});
-    
+
     }
 }
-  
+
 
 export default DeviceEntry;

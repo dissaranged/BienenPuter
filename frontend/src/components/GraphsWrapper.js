@@ -98,10 +98,8 @@ class GraphsWrapper extends Component {
 
   doAutoUpdate = async () => {
     const { autoUpdate, timeout} = this.state;
-    if(!autoUpdate || timeout)
-      return;
+    clearTimeout(timeout);
     if(autoUpdate) {
-      clearTimeout(timeout);
       const newTimeout = setTimeout(this.updateReadings, 1000*autoUpdate);
       this.setState({timeout: newTimeout});
     }
@@ -114,10 +112,10 @@ class GraphsWrapper extends Component {
   render() {
     const { data, groups, autoUpdate } = this.state;
     return (
-      <Container>
-        <Row>
-          <Col sm="8"><h1>Graphs </h1></Col>
-          <Col sm="4" >
+      <Col>
+        <Row >
+          <Col sm="8" ><h3>Graphs </h3></Col>
+          <Col sm={{ size: 1, offset: 1}} >
             <Label>
               <Input type="checkbox" onChange={this.toggleAutoUpdate} checked={!!autoUpdate}/>Update!
             </Label>
@@ -128,7 +126,7 @@ class GraphsWrapper extends Component {
             <Graph key={type} type={type} groups={groups} dataset={dataset}/>
           )) : ( <em>Nothing to see :(</em> ) }
         </Row>
-      </Container>
+      </Col>
     );
   }
   }

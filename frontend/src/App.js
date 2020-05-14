@@ -15,21 +15,16 @@ function App() {
     setDevices(devices);
 };
 
-  return (
-    <div className="App">
-      <header className="App-header">
-        <Container>
-          <Row>
-            <Col sm="5">
-              <DeviceManager devices={devices} loadDevices={loadDevices}/>
-            </Col>
-            <Col sm="7">
-              <GraphsWrapper devices={devices}/>
-            </Col>
-          </Row>
-        </Container>
-
-      </header>
+return (
+  <div className="App">
+    <header>
+      <Container>
+        <h2>Sensor Suite</h2>
+      </Container></header>
+      <Row>
+        <DeviceManager devices={devices} loadDevices={loadDevices}/>
+        <GraphsWrapper devices={devices}/>
+      </Row>
     </div>
   );
 }
