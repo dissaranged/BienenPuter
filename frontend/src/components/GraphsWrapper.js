@@ -3,7 +3,7 @@ import { DataSet } from 'vis-timeline/standalone';
 import deepEqual from 'fast-deep-equal';
 import { getReadings } from '../actions';
 
-import { Container, Row, Button } from 'reactstrap';
+import { Container, Row, Col, Input, Label } from 'reactstrap';
 import Graph from './Graph';
 
 function FtoC (f) {
@@ -42,23 +42,28 @@ class GraphsWrapper extends Component {
     }
   }
 
-  handleReading = (sample) => {
-    const {time, key, temperature_C, temperature_F, humidity} = sample;
-    const item = { x: new Date(time), group: key };
-    const temp = temperature_C || (temperature_F ? FtoC(temperature_F) : null);
-    if (!temp && !humidity) {
-      console.log(`Bad Reading for ${key}: `, sample);
-      return;
-    }
-    if (temp) { this.state.data.temperature.add({ ...item, y: temp }); }
-    if (humidity) { this.state.data.humidity.add({ ...item, y: humidity }); }
+  handleReadings = (readings) => {
+    const data = {temperature: [], humidity: []};
+    readings.forEach( sample => {
+      const {time, key, temperature_C, temperature_F, humidity} = sample;
+      const item = { x: new Date(time), group: key };
+      const temp = temperature_C || (temperature_F ? FtoC(temperature_F) : null);
+      if (!temp && !humidity) {
+        console.log(`Bad Reading for ${key}: `, sample);
+        return;
+      }
+      if (temp) { data.temperature.push({ ...item, y: temp }); }
+      if (humidity) { data.humidity.push({ ...item, y: humidity }); }
+    });
+    this.state.data.temperature.add(data.temperature);
+    this.state.data.humidity.add(data.humidity);
+    return readings;
   }
 
   async  loadReadings() {
     const {devices, groups} = this.state;
-    const readings = (await Promise.all(Object.keys(devices).map( device => getReadings(device)))).filter(list => list.length > 0);
-    readings.forEach((device) => {
-      const { key } = device[0];
+    const existing = groups.clear();
+    Object.keys(devices).forEach((key) => {
       const color = devices[key].color || `#$${Math.floor(Math.random()*0xffffff).toString(16)}`;
       const alias = devices[key].alias || key;
       groups.add( {
@@ -70,34 +75,59 @@ class GraphsWrapper extends Component {
         }
       });
     });
-    readings.forEach(device => device.forEach(this.handleReading));
     this.setState({goFetch: false, lastUpdate: Math.floor(Date.now()/1000)});
-  }
-  
-  updateReadings = async () => {
-    const { lastUpdate: since, devices, autoUpdate } = this.state;
-    const readings = await Promise.all(
-      Object.keys(devices).map( device => getReadings(device, { since }) )
+    await Promise.all(
+      Object.keys(devices)
+        .filter(device => !existing.includes(device))
+        .map( device => getReadings(device).then(this.handleReadings))
     );
-    readings.forEach( device => device.forEach(this.handleReading));
-    console.log(readings.reduce( (sum, i) => sum+=i.length, 0), ' new items since ', new Date(since* 1000));
+    this.doAutoUpdate();
+  }
+
+  updateReadings = async () => {
+    const { lastUpdate: since, devices } = this.state;
     this.setState({lastUpdate: Math.floor(Date.now()/1000)});
-    if(autoUpdate){
-      setTimeout(this.updateReadings, 1000*autoUpdate);
+    const readings = await Promise.all(
+      Object.keys(devices).map(
+        device => getReadings(device, { since }).then(this.handleReadings)
+      )
+    );
+    console.log(readings.reduce( (sum, i) => sum+=i.length, 0), ' new items since ', new Date(since* 1000));
+    this.doAutoUpdate();
+  }
+
+  doAutoUpdate = async () => {
+    const { autoUpdate, timeout} = this.state;
+    if(!autoUpdate || timeout)
+      return;
+    if(autoUpdate) {
+      clearTimeout(timeout);
+      const newTimeout = setTimeout(this.updateReadings, 1000*autoUpdate);
+      this.setState({timeout: newTimeout});
     }
   }
 
+  toggleAutoUpdate = () =>  this.setState({
+    autoUpdate: this.state.autoUpdate ? 0 : 10
+  }, this.doAutoUpdate);
+
   render() {
-    const { data, groups } = this.state;
+    const { data, groups, autoUpdate } = this.state;
     return (
       <Container>
-        <h1>Graphs</h1>
+        <Row>
+          <Col sm="8"><h1>Graphs </h1></Col>
+          <Col sm="4" >
+            <Label>
+              <Input type="checkbox" onChange={this.toggleAutoUpdate} checked={!!autoUpdate}/>Update!
+            </Label>
+          </Col>
+        </Row>
         <Row>
           {Object.keys(data).length > 0 ? Object.entries(data).map( ([type, dataset]) => (
             <Graph key={type} type={type} groups={groups} dataset={dataset}/>
           )) : ( <em>Nothing to see :(</em> ) }
         </Row>
-        <Button onClick={this.updateReadings}>Update!</Button>
       </Container>
     );
   }
