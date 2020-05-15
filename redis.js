@@ -107,12 +107,13 @@ const db = {
 
   async getReadings (opts) {
     const { device, since, until } = opts;
-    if( !await client.exists(`readings.${device}`) ) {
+    const fieldName = toName(device, 'readings');
+    if( !await client.exists(fieldName) ) {
       throw new NotFoundError('device not known');
     }
     const newerThan = since ? since.toString() : 0;
     const olderThan = until ? until.toString() : '+inf';
-    const result = await client.zrangebyscore(`readings.${device}`, newerThan, olderThan);
+    const result = await client.zrangebyscore(fieldName, newerThan, olderThan);
     return result.map(item => JSON.parse(item));
   },
   batch,
