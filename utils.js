@@ -7,11 +7,15 @@ const utils = {
   toName(device, type) {
     const name = escape(device);
     switch(type){
-    case 'reading':
-      return `reading.${name}`;
+    case '6m':
+      return `6m.${name}`;
+    case 'readings':
+      return `readings.${name}`;
     case 'device':
-    default:
+    case undefined:
       return `device.${name}`;
+    default:
+      throw new Error(`encountered unknown object type ${type}`);
     }
   },
 
@@ -38,7 +42,7 @@ const utils = {
       [key]: utils.attemptJsonParse(value)
     }), {});
   },
-
+  rawSensoreFields: ['temperature_C', 'temperature_F', 'humidity']
 };
 
 module.exports = utils;

@@ -20,7 +20,7 @@ function routes (server) {
   }));
 
   server.put('/device/:name', queryParser(), finalize(async function (req, res, next) {
-    const device = req.params.name;
+    const device = req.params.name.toString();
     const { alias, subscribed, color } = req.query;
     await db.configureDevice(device, { alias, subscribed, color });
     res.send(200);
@@ -30,11 +30,13 @@ function routes (server) {
     const opts = {
       device: req.params.name,
       since: req.query.since,
-      until: req.query.until
+      until: req.query.until,
+      type: req.query.type,
     };
     const data = await db.getReadings(opts);
     res.send(200, data);
   }));
+
 }
 
 module.exports = routes;

@@ -28,7 +28,6 @@ describe('Routes', () => {
   before(async () => {
     // setup db
     redis = db.setup({ db: 1 });
-    expect(await redis.keys('*')).to.have.length(0);
     // setup routes
     server = restify.createServer();
     routes(server);
@@ -102,7 +101,7 @@ describe('Routes', () => {
     });
   });
 
-  describe.only('GET /device/:key', () => {
+  describe('GET /device/:key', () => {
     let readings, now;
     beforeEach(async () => {
       readings = [];
@@ -123,40 +122,53 @@ describe('Routes', () => {
       await redis.zadd(toName(exampleDevice.key, 'readings'), commands);
     });
 
-    it('should return all raw readings by default', async () => {
-      const response = await chai.request(server).get(`/device/${exampleDevice.key}`);
-      expect(response).to.have.status(200);
-      expect(response.body).to.have.deep.members(readings);
+    describe('raw', () => {
+      it('should return all raw readings by default', async () => {
+        const response = await chai.request(server).get(`/device/${exampleDevice.key}`);
+        expect(response).to.have.status(200);
+        expect(response.body).to.have.deep.members(readings);
+      });
+
+      it('should return all raw readings after since', async () => {
+        const response = await chai.request(server).get(`/device/${exampleDevice.key}?since=${now-60}`);
+        expect(response).to.have.status(200);
+        expect(response.body).to.have.length(11);
+        expect(response.body).to.have.deep.members(readings.filter(
+          item => Math.floor((new Date(item.time)).valueOf() / 1000) >= now - 60
+        ));
+      });
+
+      it('should return all raw readings older until', async () => {
+        const response = await chai.request(server).get(`/device/${exampleDevice.key}?until=${now-60}`);
+        expect(response).to.have.status(200);
+        expect(response.body).to.have.length(990);
+        expect(response.body).to.have.deep.members(readings.filter(
+          item => Math.floor((new Date(item.time)).valueOf() / 1000) <= now - 60
+        ));
+      });
+
+      it('should return all raw readings between until and since', async () => {
+        const response = await chai.request(server).get(`/device/${exampleDevice.key}?since=${now-120}&until=${now-60}`);
+        expect(response).to.have.status(200);
+        expect(response.body).to.have.length(11);
+        expect(response.body).to.have.deep.members(readings.filter(
+          item => Math.floor((new Date(item.time)).valueOf() / 1000) <= now - 60
+            && Math.floor((new Date(item.time)).valueOf() / 1000) >= now - 120
+        ));
+      });
     });
 
-    it('should return all raw readings after since', async () => {
-      const response = await chai.request(server).get(`/device/${exampleDevice.key}?since=${now-60}`);
-      expect(response).to.have.status(200);
-      expect(response.body).to.have.length(11);
-      expect(response.body).to.have.deep.members(readings.filter(
-        item => Math.floor((new Date(item.time)).valueOf() / 1000) >= now - 60
-      ));
+    describe('6m smaples', () => {
+      beforeEach(async () => {
+        await db.createIndex(exampleDevice.key, {since: now-6000, until: now});
+      });
+      it('should be able to return summaries', async () => {
+        const response = await chai.request(server).get(`/device/${exampleDevice.key}?type=6m`);
+        expect(response).to.have.status(200);
+        expect(response.body).to.have.length(Math.ceil(readings.length*6/360));
+        console.log(JSON.stringify(response.body[10], null,2), 'propper integrity check missing');
+        // expect(response.body).to.have.deep.members([]);
+      });
     });
-
-    it('should return all raw readings older until', async () => {
-      const response = await chai.request(server).get(`/device/${exampleDevice.key}?until=${now-60}`);
-      expect(response).to.have.status(200);
-      expect(response.body).to.have.length(990);
-      expect(response.body).to.have.deep.members(readings.filter(
-        item => Math.floor((new Date(item.time)).valueOf() / 1000) <= now - 60
-      ));
-    });
-
-    it('should return all raw readings between until and since', async () => {
-      const response = await chai.request(server).get(`/device/${exampleDevice.key}?since=${now-120}&until=${now-60}`);
-      expect(response).to.have.status(200);
-      expect(response.body).to.have.length(11);
-      expect(response.body).to.have.deep.members(readings.filter(
-        item => Math.floor((new Date(item.time)).valueOf() / 1000) <= now - 60
-          && Math.floor((new Date(item.time)).valueOf() / 1000) >= now - 120
-      ));
-    });
-
-
   });
 });

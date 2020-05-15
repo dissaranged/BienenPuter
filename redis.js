@@ -85,7 +85,7 @@ const db = {
       throw new NotFoundError(`${device} not known`);
     }
     return client.hmset(
-      toName(device), 
+      toName(device),
       Object.entries(opts).reduce(
         (acc, [key, val]) => val ? acc.concat(key, val): acc
         , []
@@ -106,8 +106,8 @@ const db = {
   },
 
   async getReadings (opts) {
-    const { device, since, until } = opts;
-    const fieldName = toName(device, 'readings');
+    const { device, since, until, type } = opts;
+    const fieldName = toName(device, type || 'readings');
     if( !await client.exists(fieldName) ) {
       throw new NotFoundError('device not known');
     }
@@ -116,6 +116,34 @@ const db = {
     const result = await client.zrangebyscore(fieldName, newerThan, olderThan);
     return result.map(item => JSON.parse(item));
   },
+
+  async createIndex(device, {since, until}) {
+    const readingsFname = toName(device, 'readings');
+    const sampleFname = toName(device, '6m');
+    const chain = client.multi();
+    const intervall = 6*60; // sample intervall in secconds (6m)
+    for(let c = 0; since + c < until; c += intervall) {
+      const readings = await client.zrangebyscore(readingsFname, since + c, since + c +intervall);
+      if(readings.length === 0) {
+        throw new NotFoundError('try to index nonexisting readings');
+      }
+      const sample = readings
+        .map(JSON.parse)
+        .reduce((sample, reading, index, data) => {
+          const start = index > 0 ? new Date(data[index-1].time) : new Date((since +c)*1000);
+          const end = index < data.length-1 ? new Date(data[index+1].time) : new Date((since+ c + intervall)*1000);
+          const weight = (end -start) /1000 /2 / intervall;
+          return {
+            min: sample.min > reading.temperature_C ? reading.temperature_C : sample.min,
+            max: sample.max < reading.temperature_C ? reading.temperature_C : sample.max,
+            average: sample.average + (reading.temperature_C * weight),
+          };
+        },{average: 0, min: +Infinity, max: -Infinity, sum: 0, weight: 0});
+      chain.zadd(sampleFname, since+c+intervall/2, JSON.stringify({ time: (since+c+intervall/2)*1000, temperature_C: sample}));
+    }
+    await batch(chain);
+  },
+
   batch,
   hsetObject
 };
