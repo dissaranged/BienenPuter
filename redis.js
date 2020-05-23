@@ -106,15 +106,22 @@ const db = {
   },
 
   async getReadings (opts) {
-    const { device, since, until, type } = opts;
+    const { device, since, until, type, perPage, pageOffset } = opts;
     const fieldName = toName(device, type || 'readings');
     if( !await client.exists(fieldName) ) {
       throw new NotFoundError('device not known');
     }
     const newerThan = since ? since.toString() : 0;
     const olderThan = until ? until.toString() : '+inf';
-    const result = await client.zrangebyscore(fieldName, newerThan, olderThan);
-    return result.map(item => JSON.parse(item));
+
+    const offset = pageOffset ? pageOffset.toString() : 0;
+    const count = perPage ? perPage.toString() : 100;
+
+    const chain = client.multi();
+    chain.zcount(fieldName, newerThan, olderThan);
+    chain.zrangebyscore(fieldName,  newerThan, olderThan, 'LIMIT', offset, count);
+    const [total, result] = await batch(chain);
+    return [total, ...result.map(item => JSON.parse(item))];
   },
 
   async createIndex(device, {since, until}) {

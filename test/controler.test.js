@@ -112,7 +112,7 @@ describe('DB controller', () => {
       }));
     });
   });
-  
+
   describe('createIndex', () => {
     const latestExample = {
       time: '2020-05-08,15:14:25',
@@ -148,9 +148,11 @@ describe('DB controller', () => {
     it('creates 6m samples correctly', async () => {
       await db.createIndex(latestExample.key, {since: now, until: now+360});
       const result = await db.getReadings({device: latestExample.key, type: '6m'});
-      expect(result).to.deep.equal([{
-        temperature_C: {min: 10, max: 40, average: (10*30+20*35+40*295)/360}, 
-        humidity: {min: 20, max: 80, average: 2*(10*30+20*35+40*295)/360}, 
+      expect(result).to.deep.equal([
+        1, // first element holds the total
+        {
+        temperature_C: {min: 10, max: 40, average: (10*30+20*35+40*295)/360},
+        humidity: {min: 20, max: 80, average: 2*(10*30+20*35+40*295)/360},
         time: (now+180)*1000
       }]);
     });

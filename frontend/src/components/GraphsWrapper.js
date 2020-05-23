@@ -64,7 +64,7 @@ class GraphsWrapper extends Component {
     const {devices, groups} = this.state;
     const existing = groups.clear();
     Object.keys(devices).forEach((key) => {
-      const color = devices[key].color || `#$${Math.floor(Math.random()*0xffffff).toString(16)}`;
+      const color = devices[key].color || `#${Math.floor(Math.random()*0xffffff).toString(16)}`;
       const alias = devices[key].alias || key;
       groups.add( {
         id: key,

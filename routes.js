@@ -32,9 +32,11 @@ function routes (server) {
       since: req.query.since,
       until: req.query.until,
       type: req.query.type,
+      perPage: req.query.perPage,
+      pageOffset: req.query.pageOffset,
     };
     const data = await db.getReadings(opts);
-    res.send(200, data);
+    res.send(200, data.slice(1), {'x-total': data[0], 'x-per-page': opts.perPage || 100, 'x-page-offset': opts.pageOffset || 0}); // do not like this, default perPage is now here and in db.getReadings
   }));
 
 }
