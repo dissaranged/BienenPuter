@@ -42,7 +42,7 @@ const utils = {
       [key]: utils.attemptJsonParse(value)
     }), {});
   },
-  rawSensoreFields: ['temperature_C', 'temperature_F', 'humidity']
+  RAW_SENSOR_NAMES: ['temperature_C', 'temperature_F', 'humidity']
 };
 
 module.exports = utils;

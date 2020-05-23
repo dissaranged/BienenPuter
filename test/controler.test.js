@@ -112,4 +112,47 @@ describe('DB controller', () => {
       }));
     });
   });
+  
+  describe('createIndex', () => {
+    const latestExample = {
+      time: '2020-05-08,15:14:25',
+      brand: 'OS',
+      model: 'Model1',
+      id: 123,
+      channel: 1,
+      battery_ok: 1,
+      temperature_C: 16.6,
+      key: 'Model1:123@1'
+    };
+    const now = 1590232971;
+
+    beforeEach(async () => {
+      const commands = [//val|+t
+        [10,   0 ],
+        [20,  60 ],
+        [40,  70 ],
+        [40, 360 ],
+      ].reduce( (acc, [val, t]) => ([
+        ...acc,
+        now+t,
+        JSON.stringify({
+          ...latestExample,
+          time: new Date((now+t)*1000),
+          temperature_C: val,
+          humidity: val*2,
+        })
+      ]), []);
+      await redis.zadd(toName(latestExample.key, 'readings'), commands);
+    });
+
+    it('creates 6m samples correctly', async () => {
+      await db.createIndex(latestExample.key, {since: now, until: now+360});
+      const result = await db.getReadings({device: latestExample.key, type: '6m'});
+      expect(result).to.deep.equal([{
+        temperature_C: {min: 10, max: 40, average: (10*30+20*35+40*295)/360}, 
+        humidity: {min: 20, max: 80, average: 2*(10*30+20*35+40*295)/360}, 
+        time: (now+180)*1000
+      }]);
+    });
+  });
 });

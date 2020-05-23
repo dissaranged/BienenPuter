@@ -1,7 +1,7 @@
 const redis = require('redis');
 const { NotFoundError } = require('restify-errors');
 const { promisify } = require('util');
-const { toName, fromRedisResult } = require('./utils');
+const { toName, fromRedisResult, RAW_SENSOR_NAMES } = require('./utils');
 let client;
 
 function batch (chain) {
@@ -128,18 +128,26 @@ const db = {
         throw new NotFoundError('try to index nonexisting readings');
       }
       const sample = readings
-        .map(JSON.parse)
-        .reduce((sample, reading, index, data) => {
-          const start = index > 0 ? new Date(data[index-1].time) : new Date((since +c)*1000);
-          const end = index < data.length-1 ? new Date(data[index+1].time) : new Date((since+ c + intervall)*1000);
-          const weight = (end -start) /1000 /2 / intervall;
-          return {
-            min: sample.min > reading.temperature_C ? reading.temperature_C : sample.min,
-            max: sample.max < reading.temperature_C ? reading.temperature_C : sample.max,
-            average: sample.average + (reading.temperature_C * weight),
-          };
-        },{average: 0, min: +Infinity, max: -Infinity, sum: 0, weight: 0});
-      chain.zadd(sampleFname, since+c+intervall/2, JSON.stringify({ time: (since+c+intervall/2)*1000, temperature_C: sample}));
+            .map(JSON.parse)
+            .reduce((sample, reading, index, data) => {
+              const start = index > 0 ? new Date(data[index-1].time) : new Date((since +c)*1000);
+              const end = index < data.length-1 ? new Date(data[index+1].time) : new Date((since+ c + intervall)*1000);
+              const weight = (end -start) /1000 /2 / intervall;
+              return RAW_SENSOR_NAMES
+                .filter((name) => Object.keys(reading).includes(name))
+                .reduce( (acc, name) => {
+                  const data = sample[name] || {average: 0, min: +Infinity, max: -Infinity};
+                  return {
+                    ...acc,
+                    [name]: {
+                      min: data.min > reading[name] ? reading[name] : data.min,
+                      max: data.max < reading[name] ? reading[name] : data.max,
+                      average: data.average + (reading[name] * weight),
+                    }, 
+                  };
+                }, sample);
+            },  {});
+      chain.zadd(sampleFname, since+c+intervall/2, JSON.stringify({ ...sample, time: (since+c+intervall/2)*1000}));
     }
     await batch(chain);
   },
