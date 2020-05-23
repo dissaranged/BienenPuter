@@ -119,9 +119,13 @@ const db = {
 
     const chain = client.multi();
     chain.zcount(fieldName, newerThan, olderThan);
-    chain.zrangebyscore(fieldName,  newerThan, olderThan, 'LIMIT', offset, count);
+    chain.zrevrangebyscore(fieldName,  olderThan, newerThan, 'LIMIT', offset, count);
     const [total, result] = await batch(chain);
-    return [total, ...result.map(item => JSON.parse(item))];
+    return {
+      total,
+      perPage: count,
+      pageOffset: offset,
+      data: result.map(item => JSON.parse(item))};
   },
 
   async createIndex(device, {since, until}) {

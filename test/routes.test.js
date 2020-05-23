@@ -123,46 +123,47 @@ describe('Routes', () => {
     });
 
     describe('raw', () => {
-      it('should return all raw readings for negative count', async () => {
-        const response = await chai.request(server).get(`/device/${exampleDevice.key}?perPage=-1`);
-        expect(response).to.have.status(200);
-        expect(response.body).to.have.deep.members(readings);
-      });
+      describe('with pagination disabled', () => {
+        it('should return all raw readings', async () => {
+          const response = await chai.request(server).get(`/device/${exampleDevice.key}?perPage=-1`);
+          expect(response).to.have.status(200);
+          expect(response.body).to.have.deep.members(readings);
+        });
 
-      it('should return all raw readings after since', async () => {
-        const response = await chai.request(server).get(`/device/${exampleDevice.key}?since=${now-60}&perPage=-1`);
-        expect(response).to.have.status(200);
-        expect(response.body).to.have.length(11);
-        expect(response.body).to.have.deep.members(readings.filter(
-          item => Math.floor((new Date(item.time)).valueOf() / 1000) >= now - 60
-        ));
-      });
+        it('should return all raw readings after since', async () => {
+          const response = await chai.request(server).get(`/device/${exampleDevice.key}?since=${now-60}&perPage=-1`);
+          expect(response).to.have.status(200);
+          expect(response.body).to.have.length(11);
+          expect(response.body).to.have.deep.members(readings.filter(
+            item => Math.floor((new Date(item.time)).valueOf() / 1000) >= now - 60
+          ));
+        });
 
-      it('should return all raw readings older until', async () => {
-        const response = await chai.request(server).get(`/device/${exampleDevice.key}?until=${now-60}&perPage=-1`);
-        expect(response).to.have.status(200);
-        expect(response.body).to.have.length(990);
-        expect(response.body).to.have.deep.members(readings.filter(
-          item => Math.floor((new Date(item.time)).valueOf() / 1000) <= now - 60
-        ));
-      });
+        it('should return all raw readings older until', async () => {
+          const response = await chai.request(server).get(`/device/${exampleDevice.key}?until=${now-60}&perPage=-1`);
+          expect(response).to.have.status(200);
+          expect(response.body).to.have.length(990);
+          expect(response.body).to.have.deep.members(readings.filter(
+            item => Math.floor((new Date(item.time)).valueOf() / 1000) <= now - 60
+          ));
+        });
 
-      it('should return all raw readings between until and since', async () => {
-        const response = await chai.request(server).get(`/device/${exampleDevice.key}?since=${now-120}&until=${now-60}&perPage=-1`);
-        expect(response).to.have.status(200);
-        expect(response.body).to.have.length(11);
-        expect(response.body).to.have.deep.members(readings.filter(
-          item => Math.floor((new Date(item.time)).valueOf() / 1000) <= now - 60
-            && Math.floor((new Date(item.time)).valueOf() / 1000) >= now - 120
-        ));
+        it('should return all raw readings between until and since', async () => {
+          const response = await chai.request(server).get(`/device/${exampleDevice.key}?since=${now-120}&until=${now-60}&perPage=-1`);
+          expect(response).to.have.status(200);
+          expect(response.body).to.have.length(11);
+          expect(response.body).to.have.deep.members(readings.filter(
+            item => Math.floor((new Date(item.time)).valueOf() / 1000) <= now - 60
+              && Math.floor((new Date(item.time)).valueOf() / 1000) >= now - 120
+          ));
+        });
       });
-
       describe('pagination', () => {
         it('should be able to return paginated data', async () => {
           const response = await chai.request(server).get(`/device/${exampleDevice.key}?perPage=100`);
           expect(response).to.have.status(200);
           expect(response.body).to.have.length(100);
-          expect(response.body).to.have.deep.members(readings.slice(readings.length-100, readings.length));
+          expect(response.body).to.have.deep.members(readings.slice(0, 100));
           expect(response.headers).to.deep.include({'x-total': '1000', 'x-per-page': '100', 'x-page-offset': '0'});
         });
 
@@ -170,8 +171,19 @@ describe('Routes', () => {
           const response = await chai.request(server).get(`/device/${exampleDevice.key}?perPage=100&pageOffset=30`);
           expect(response).to.have.status(200);
           expect(response.body).to.have.length(100);
-          expect(response.body).to.have.deep.members(readings.slice(readings.length-130, readings.length-30));
+          expect(response.body).to.have.deep.members(readings.slice(30, 130));
           expect(response.headers).to.deep.include({'x-total': '1000', 'x-per-page': '100', 'x-page-offset': '30'});
+        });
+
+        it('should return all readings correctly', async () => {
+          const results = []
+          for(let c = 0; c < 1000; c+=100) {
+            const response = await chai.request(server).get(`/device/${exampleDevice.key}?perPage=100&pageOffset=${c}`);
+            results.push.apply(results, response.body);
+          }
+          expect(results).to.have.length(1000);
+          expect(results).to.have.deep.members(readings);
+
         });
       });
     });
