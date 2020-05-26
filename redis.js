@@ -67,11 +67,19 @@ const db = {
     const devName = toName(key, 'device');
     const subscribed = await client.hget(devName, 'subscribed');
     if (subscribed === 'true') {
-      return batch(
-        client.multi()
-          .zadd(`readings.${data.key}`, Math.floor(new Date(data.time).valueOf() / 1000), JSON.stringify(data))
-          .hset(devName, 'latest', JSON.stringify(data))
-      );
+      const chain = client.multi()
+            .zadd(toName(key, 'readings'), Math.floor(new Date(data.time).valueOf() / 1000), JSON.stringify(data))
+            .hset(devName, 'latest', JSON.stringify(data));
+      const now = Date.now().valueOf();
+      const lastIndexRound = parseInt(await client.hget(devName, 'lastIndex')) || parseInt((await client.zrangebyscore(toName(key, 'readings'), 0, '+inf', 'LIMIT', 0, 1, 'WITHSCORES') )[1])*1000 || now;
+      if(now >= lastIndexRound + 6*60*1000) { // create Index every full 6m
+        const nextIndexRound = now-(now % (6*60*1000));
+        chain.hset(devName, 'lastIndex', nextIndexRound);
+        await batch(chain);
+        await db.createIndex(key, {since: lastIndexRound/1000, until: nextIndexRound/1000});
+      } else {
+        return batch(chain);
+      };
     }
     if(subscribed == null) {
       return client.hmset(devName, 'latest', JSON.stringify(data), 'key', key);
@@ -136,7 +144,9 @@ const db = {
     for(let c = 0; since + c < until; c += intervall) {
       const readings = await client.zrangebyscore(readingsFname, since + c, since + c +intervall);
       if(readings.length === 0) {
-        throw new NotFoundError('try to index nonexisting readings');
+        const error = new NotFoundError(`try to index nonexisting readings: ${readingsFname} ${since+c} ${since+c+intervall}`);
+        console.log(error);
+        continue;
       }
       const sample = readings
             .map(JSON.parse)
@@ -158,7 +168,7 @@ const db = {
                   };
                 }, sample);
             },  {});
-      chain.zadd(sampleFname, since+c+intervall/2, JSON.stringify({ ...sample, time: (since+c+intervall/2)*1000}));
+      chain.zadd(sampleFname, since+c+intervall/2, JSON.stringify({ ...sample, time: (since+c+intervall/2.0)*1000}));
     }
     await batch(chain);
   },

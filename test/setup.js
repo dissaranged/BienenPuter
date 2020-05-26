@@ -18,3 +18,7 @@ before(async () => {
   }
 });
 after((done) => redis.quit(done));
+
+afterEach(async () => {
+  await redis.flushdb();
+});

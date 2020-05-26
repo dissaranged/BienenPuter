@@ -11,10 +11,6 @@ describe('DB controller', () => {
     expect(await redis.keys('*')).to.have.length(0);
   });
 
-  afterEach(async () => {
-    await redis.flushdb();
-  });
-
   describe('storeReading', () => {
     const fixtures = {
       'Model1:123@1': {

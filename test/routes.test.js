@@ -38,10 +38,6 @@ describe('Routes', () => {
     );
   });
 
-  afterEach(async () => {
-    await redis.flushdb();
-  });
-
   describe('GET /devices', () => {
     const devices = {
       [exampleDevice.latest.key]: exampleDevice,
@@ -176,7 +172,7 @@ describe('Routes', () => {
         });
 
         it('should return all readings correctly', async () => {
-          const results = []
+          const results = [];
           for(let c = 0; c < 1000; c+=100) {
             const response = await chai.request(server).get(`/device/${exampleDevice.key}?perPage=100&pageOffset=${c}`);
             results.push.apply(results, response.body);
