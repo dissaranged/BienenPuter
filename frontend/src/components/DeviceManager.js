@@ -1,5 +1,5 @@
 import React, {Component} from 'react';
-import { Container, Row, Col, Button } from 'reactstrap';
+import { Row, Col, Button } from 'reactstrap';
 import { setDeviceOptions } from '../actions.js';
 import DeviceEntry from './DeviceEntry';
 
@@ -22,6 +22,7 @@ class DeviceManager extends Component {
           <h3>DeviceManager</h3>
           </Col>
           <Col sm="3">
+            <Button onClick={this.props.loadDevices}>Reload</Button>
             <Button onClick={this.hide}>Hide</Button>
           </Col>
         </Row>

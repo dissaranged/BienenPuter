@@ -22,8 +22,8 @@ export default class Graph extends Component {
       }
     };
 
-    const graph = new Graph2d(this.ref.current, dataset, groups, opts)
-    console.log(graph)
+    const graph = new Graph2d(this.ref.current, dataset, groups, opts);
+    this.setState({graph});
   }
   render() {
     const {type} = this.props;

@@ -58,24 +58,21 @@ class DeviceEntry extends Component {
           <Card>
             <CardBody>
               <div ref={this.tooltipTarget}>
-                { latest ? (
-                  <div >
-                    <h5 style={{color:'blue'}}>{latest.model}</h5>
-                    { latest.temperature_C &&
-                      <Col>
-                        <span>Temp: {latest.temperature_C} °C</span>
-                      </Col>
-                    }
-                    { latest.temperature_F &&
-                      <Col>
-                        <span>Temp: {latest.temperature_F} °F</span>
-                      </Col>}
-                    { latest.humidity &&
-                      <Col>
-                        <span>Humidity: {latest.humidity} %</span>
-                      </Col>}
+                { latest ?(
+                  <div>
+                    <Col>
+                      <b style={{color:'blue'}}>{latest.model}</b>
+                    </Col>
+                    {
+                      Object.entries(latest)
+                        .filter( ([key]) => !['time', 'id', 'channel', 'mic', 'key', 'model'].includes(key))
+                        .map(([key, value]) => (
+                          <Col key={key}>
+                            <span><b>{key}</b>: <i>{value}</i> </span>
+                          </Col>
+                        ))}
                   </div>
-                ) : <em> No Sample Data :( </em> }
+                ): <em> No Sample Data :( </em> }
               </div>
               <div>
                 <small style={{color:'red'}}>last seen: {age}</small>

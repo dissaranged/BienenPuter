@@ -3,7 +3,7 @@ import { DataSet } from 'vis-timeline/standalone';
 import deepEqual from 'fast-deep-equal';
 import { getReadings } from '../actions';
 
-import { Container, Row, Col, Input, Label } from 'reactstrap';
+import { Row, Col, Input, Label } from 'reactstrap';
 import Graph from './Graph';
 
 function FtoC (f) {

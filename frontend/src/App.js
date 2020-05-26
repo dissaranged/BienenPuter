@@ -1,7 +1,7 @@
 import React, {useState} from 'react';
 import './App.css';
 import { getDevices } from './actions.js';
-import { Container, Row, Col } from 'reactstrap';
+import { Container, Row } from 'reactstrap';
 import DeviceManager from './components/DeviceManager';
 import GraphsWrapper from './components/GraphsWrapper';
 
