@@ -22,6 +22,7 @@ class GraphsWrapper extends Component {
     autoUpdate: 10,
     goFetch: false,
   };
+
   static getDerivedStateFromProps(props, state) {
     const devices = props.devices.filter(({subscribed}) => subscribed).reduce((acc, data) => ({
       ...acc,
@@ -42,21 +43,19 @@ class GraphsWrapper extends Component {
     }
   }
 
-  handleReadings = (readings) => {
+  handleReadings = (key, readings) => {
     const data = {temperature: [], humidity: []};
+    const temperatures = []
     readings.forEach( sample => {
-      const {time, key, temperature_C, temperature_F, humidity} = sample;
-      const item = { x: new Date(time), group: key };
-      const temp = temperature_C || (temperature_F ? FtoC(temperature_F) : null);
-      if (!temp && !humidity) {
-        console.log(`Bad Reading for ${key}: `, sample);
-        return;
+      const {time, temperature_C, humidity} = sample;
+      const x = new Date(time);
+      if(temperature_C) {
+        temperatures.push({x, y: temperature_C.average, group: key},
+                          {x, y: temperature_C.min, group: `min-${key}`},
+                          {x, y: temperature_C.max, group: `max-${key}`});
       }
-      if (temp) { data.temperature.push({ ...item, y: temp }); }
-      if (humidity) { data.humidity.push({ ...item, y: humidity }); }
     });
-    this.state.data.temperature.add(data.temperature);
-    this.state.data.humidity.add(data.humidity);
+    this.state.data.temperature.add(temperatures);
     return readings;
   }
 
@@ -66,20 +65,44 @@ class GraphsWrapper extends Component {
     Object.keys(devices).forEach((key) => {
       const color = devices[key].color || `#${Math.floor(Math.random()*0xffffff).toString(16)}`;
       const alias = devices[key].alias || key;
-      groups.add( {
-        id: key,
-        content: alias,
-        style: `stroke:${color};fill:${color}`,
-        options: {
-          drawPoints: { styles: `stroke:${color};fill:${color}` }
+      groups.add([
+        {
+          id: `max-${key}`,
+          content: `MAX-${key}`,
+          style: 'stroke-width:0px',
+          options: {
+            excludeFromLegend: true,
+            shaded: { orientation: 'group', groupId: key, style: 'fill:red'},
+            drawPoints: false,
+          }
+        }, {
+          id: key,
+          content: alias,
+          style: `stroke:${color};fill:${color}`,
+          options: {
+            drawPoints: { styles: `stroke:${color};fill:${color}` }
+          }
+        }, {
+          id: `min-${key}`,
+          content: `MIN-${key}`,
+          style: 'stroke-width:0px',
+          options: {
+            excludeFromLegend: true,
+            shaded: { orientation: 'group', groupId: key, style: 'fill:green' },
+            drawPoints: false,
+          }
         }
-      });
+      ]);
+
     });
     this.setState({goFetch: false, lastUpdate: Math.floor(Date.now()/1000)});
     await Promise.all(
       Object.keys(devices)
         .filter(device => !existing.includes(device))
-        .map( device => getReadings(device).then(this.handleReadings))
+        .map( async device => {
+          const readings = await getReadings(device, {type: '6m'});
+          this.handleReadings(device, readings);
+        })
     );
     this.doAutoUpdate();
   }
@@ -89,7 +112,7 @@ class GraphsWrapper extends Component {
     this.setState({lastUpdate: Math.floor(Date.now()/1000)});
     const readings = await Promise.all(
       Object.keys(devices).map(
-        device => getReadings(device, { since }).then(this.handleReadings)
+        device => getReadings(device, { since, type: '6m' }).then(this.handleReadings.bind(null, device))
       )
     );
     console.log(readings.reduce( (sum, i) => sum+=i.length, 0), ' new items since ', new Date(since* 1000));
