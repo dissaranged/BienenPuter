@@ -70,21 +70,26 @@ const db = {
       const chain = client.multi()
             .zadd(toName(key, 'readings'), Math.floor(new Date(data.time).valueOf() / 1000), JSON.stringify(data))
             .hset(devName, 'latest', JSON.stringify(data));
-      const now = Date.now().valueOf();
-      const lastIndexRound = parseInt(await client.hget(devName, 'lastIndex')) || parseInt((await client.zrangebyscore(toName(key, 'readings'), 0, '+inf', 'LIMIT', 0, 1, 'WITHSCORES') )[1])*1000 || now;
-      if(now >= lastIndexRound + 6*60*1000) { // create Index every full 6m
-        const nextIndexRound = now-(now % (6*60*1000));
-        chain.hset(devName, 'lastIndex', nextIndexRound);
-        await batch(chain);
-        await db.createIndex(key, {since: lastIndexRound/1000, until: nextIndexRound/1000});
-      } else {
-        return batch(chain);
-      };
+      await batch(chain);
+      return db.indexing(key);
     }
     if(subscribed == null) {
       return client.hmset(devName, 'latest', JSON.stringify(data), 'key', key);
     }
     return client.hset(devName, 'latest', JSON.stringify(data));
+  },
+
+  async indexing(key) {
+    const now = Date.now().valueOf();
+    const devName = toName(key, 'device');
+    const lastIndexRound = parseInt((await client.zrevrangebyscore(toName(key, '6m'), '+inf', 0, 'LIMIT', 0, 1, 'WITHSCORES') )[1])*1000
+          || parseInt((await client.zrangebyscore(toName(key, 'readings'), 0, '+inf', 'LIMIT', 0, 1, 'WITHSCORES') )[1])*1000
+          || now;
+    if(now >= lastIndexRound + 6*60*1000) { // create Index every full 6m
+      const nextIndexRound = now-(now % (6*60*1000)); // round down to last full 6m
+      await db.createIndex(key, {since: lastIndexRound/1000, until: nextIndexRound/1000});
+      await client.hset(devName, 'lastIndex', nextIndexRound);
+    };
   },
 
   async configureDevice(device, opts) {
@@ -117,7 +122,7 @@ const db = {
     const { device, since, until, type, perPage, pageOffset } = opts;
     const fieldName = toName(device, type || 'readings');
     if( !await client.exists(fieldName) ) {
-      throw new NotFoundError('device not known');
+      throw new NotFoundError(`device not known: ${device}`);
     }
     const newerThan = since ? since.toString() : 0;
     const olderThan = until ? until.toString() : '+inf';
@@ -148,12 +153,27 @@ const db = {
         console.log(error);
         continue;
       }
-      const sample = readings
+      let sample = readings
             .map(JSON.parse)
             .reduce((sample, reading, index, data) => {
-              const start = index > 0 ? new Date(data[index-1].time) : new Date((since +c)*1000);
-              const end = index < data.length-1 ? new Date(data[index+1].time) : new Date((since+ c + intervall)*1000);
-              const weight = (end -start) /1000 /2 / intervall;
+              let weight = 0; // the following code sucks
+              if(data.length === 1){
+                  weight = 1;
+              } else if(index === 0) {
+                const start = new Date((since+c)*1000);
+                const end = new Date(data[index+1].time);
+                const now = new Date(reading.time);
+                weight = ((end-now)/2 + (now-start)) /1000 /intervall;
+              } else if(index === data.length -1) {
+                const start = new Date(data[index-1].time);
+                const end = new Date((since+c+intervall)*1000);
+                const now = new Date(reading.time);
+                weight = ((now-start)/2 + (end-now)) /1000 /intervall;
+              } else {
+                const start = new Date(data[index-1].time);
+                const end = new Date(data[index+1].time);
+                weight = (end -start) /2 /1000 /intervall;
+              } // until here
               return RAW_SENSOR_NAMES
                 .filter((name) => Object.keys(reading).includes(name))
                 .reduce( (acc, name) => {
@@ -161,10 +181,10 @@ const db = {
                   return {
                     ...acc,
                     [name]: {
-                      min: data.min > reading[name] ? reading[name] : data.min,
-                      max: data.max < reading[name] ? reading[name] : data.max,
-                      average: data.average + (reading[name] * weight),
-                    }, 
+                      min: data.min < reading[name] ?  data.min : reading[name],
+                      max: data.max > reading[name] ? data.max : reading[name],
+                      average: data.average + (reading[name] * weight ),
+                    },
                   };
                 }, sample);
             },  {});

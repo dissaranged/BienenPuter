@@ -4,15 +4,810 @@ const db = require('../redis');
 const { toName, toRedisResult } = require('../utils.js');
 
 describe('DB controller', () => {
-  let redis;
-  before(async () => {
-    // setup db
-    redis = db.setup({ db: 1 });
-    expect(await redis.keys('*')).to.have.length(0);
-  });
-
-  describe('storeReading', () => {
     const fixtures = {
+      realWorldData: [
+        {
+          time: '2020-05-27,18:04:39',
+          model: 'Fineoffset-WH5',
+          id: 247,
+          temperature_C: 34.8,
+          mic: 'CRC',
+          key: 'Fineoffset-WH5:247'
+        },
+        {
+          time: '2020-05-27,18:03:51',
+          model: 'Fineoffset-WH5',
+          id: 247,
+          temperature_C: 35.2,
+          mic: 'CRC',
+          key: 'Fineoffset-WH5:247'
+        },
+        {
+          time: '2020-05-27,18:03:03',
+          model: 'Fineoffset-WH5',
+          id: 247,
+          temperature_C: 34.9,
+          mic: 'CRC',
+          key: 'Fineoffset-WH5:247'
+        },
+        {
+          time: '2020-05-27,18:02:15',
+          model: 'Fineoffset-WH5',
+          id: 247,
+          temperature_C: 34.8,
+          mic: 'CRC',
+          key: 'Fineoffset-WH5:247'
+        },
+        {
+          time: '2020-05-27,18:01:27',
+          model: 'Fineoffset-WH5',
+          id: 247,
+          temperature_C: 34.8,
+          mic: 'CRC',
+          key: 'Fineoffset-WH5:247'
+        },
+        {
+          time: '2020-05-27,18:00:39',
+          model: 'Fineoffset-WH5',
+          id: 247,
+          temperature_C: 34.8,
+          mic: 'CRC',
+          key: 'Fineoffset-WH5:247'
+        },
+        {
+          time: '2020-05-27,17:59:51',
+          model: 'Fineoffset-WH5',
+          id: 247,
+          temperature_C: 35.3,
+          mic: 'CRC',
+          key: 'Fineoffset-WH5:247'
+        },
+        {
+          time: '2020-05-27,17:59:03',
+          model: 'Fineoffset-WH5',
+          id: 247,
+          temperature_C: 34.9,
+          mic: 'CRC',
+          key: 'Fineoffset-WH5:247'
+        },
+        {
+          time: '2020-05-27,17:58:15',
+          model: 'Fineoffset-WH5',
+          id: 247,
+          temperature_C: 34.8,
+          mic: 'CRC',
+          key: 'Fineoffset-WH5:247'
+        },
+        {
+          time: '2020-05-27,17:57:27',
+          model: 'Fineoffset-WH5',
+          id: 247,
+          temperature_C: 34.9,
+          mic: 'CRC',
+          key: 'Fineoffset-WH5:247'
+        },
+        {
+          time: '2020-05-27,17:56:39',
+          model: 'Fineoffset-WH5',
+          id: 247,
+          temperature_C: 34.8,
+          mic: 'CRC',
+          key: 'Fineoffset-WH5:247'
+        },
+        {
+          time: '2020-05-27,17:55:51',
+          model: 'Fineoffset-WH5',
+          id: 247,
+          temperature_C: 34.8,
+          mic: 'CRC',
+          key: 'Fineoffset-WH5:247'
+        },
+        {
+          time: '2020-05-27,17:55:03',
+          model: 'Fineoffset-WH5',
+          id: 247,
+          temperature_C: 34.8,
+          mic: 'CRC',
+          key: 'Fineoffset-WH5:247'
+        },
+        {
+          time: '2020-05-27,17:54:15',
+          model: 'Fineoffset-WH5',
+          id: 247,
+          temperature_C: 34.9,
+          mic: 'CRC',
+          key: 'Fineoffset-WH5:247'
+        },
+        {
+          time: '2020-05-27,17:53:27',
+          model: 'Fineoffset-WH5',
+          id: 247,
+          temperature_C: 34.9,
+          mic: 'CRC',
+          key: 'Fineoffset-WH5:247'
+        },
+        {
+          time: '2020-05-27,17:52:39',
+          model: 'Fineoffset-WH5',
+          id: 247,
+          temperature_C: 34.9,
+          mic: 'CRC',
+          key: 'Fineoffset-WH5:247'
+        },
+        {
+          time: '2020-05-27,17:51:51',
+          model: 'Fineoffset-WH5',
+          id: 247,
+          temperature_C: 34.9,
+          mic: 'CRC',
+          key: 'Fineoffset-WH5:247'
+        },
+        {
+          time: '2020-05-27,17:51:03',
+          model: 'Fineoffset-WH5',
+          id: 247,
+          temperature_C: 35.3,
+          mic: 'CRC',
+          key: 'Fineoffset-WH5:247'
+        },
+        {
+          time: '2020-05-27,17:50:15',
+          model: 'Fineoffset-WH5',
+          id: 247,
+          temperature_C: 34.9,
+          mic: 'CRC',
+          key: 'Fineoffset-WH5:247'
+        },
+        {
+          time: '2020-05-27,17:49:27',
+          model: 'Fineoffset-WH5',
+          id: 247,
+          temperature_C: 35.3,
+          mic: 'CRC',
+          key: 'Fineoffset-WH5:247'
+        },
+        {
+          time: '2020-05-27,17:48:39',
+          model: 'Fineoffset-WH5',
+          id: 247,
+          temperature_C: 34.9,
+          mic: 'CRC',
+          key: 'Fineoffset-WH5:247'
+        },
+        {
+          time: '2020-05-27,17:47:51',
+          model: 'Fineoffset-WH5',
+          id: 247,
+          temperature_C: 34.9,
+          mic: 'CRC',
+          key: 'Fineoffset-WH5:247'
+        },
+        {
+          time: '2020-05-27,17:47:03',
+          model: 'Fineoffset-WH5',
+          id: 247,
+          temperature_C: 35.3,
+          mic: 'CRC',
+          key: 'Fineoffset-WH5:247'
+        },
+        {
+          time: '2020-05-27,17:46:15',
+          model: 'Fineoffset-WH5',
+          id: 247,
+          temperature_C: 35.3,
+          mic: 'CRC',
+          key: 'Fineoffset-WH5:247'
+        },
+        {
+          time: '2020-05-27,17:45:27',
+          model: 'Fineoffset-WH5',
+          id: 247,
+          temperature_C: 34.9,
+          mic: 'CRC',
+          key: 'Fineoffset-WH5:247'
+        },
+        {
+          time: '2020-05-27,17:44:39',
+          model: 'Fineoffset-WH5',
+          id: 247,
+          temperature_C: 35.3,
+          mic: 'CRC',
+          key: 'Fineoffset-WH5:247'
+        },
+        {
+          time: '2020-05-27,17:43:51',
+          model: 'Fineoffset-WH5',
+          id: 247,
+          temperature_C: 34.9,
+          mic: 'CRC',
+          key: 'Fineoffset-WH5:247'
+        },
+        {
+          time: '2020-05-27,17:43:03',
+          model: 'Fineoffset-WH5',
+          id: 247,
+          temperature_C: 34.9,
+          mic: 'CRC',
+          key: 'Fineoffset-WH5:247'
+        },
+        {
+          time: '2020-05-27,17:42:15',
+          model: 'Fineoffset-WH5',
+          id: 247,
+          temperature_C: 34.9,
+          mic: 'CRC',
+          key: 'Fineoffset-WH5:247'
+        },
+        {
+          time: '2020-05-27,17:41:27',
+          model: 'Fineoffset-WH5',
+          id: 247,
+          temperature_C: 35.3,
+          mic: 'CRC',
+          key: 'Fineoffset-WH5:247'
+        },
+        {
+          time: '2020-05-27,17:40:39',
+          model: 'Fineoffset-WH5',
+          id: 247,
+          temperature_C: 34.9,
+          mic: 'CRC',
+          key: 'Fineoffset-WH5:247'
+        },
+        {
+          time: '2020-05-27,17:39:51',
+          model: 'Fineoffset-WH5',
+          id: 247,
+          temperature_C: 34.9,
+          mic: 'CRC',
+          key: 'Fineoffset-WH5:247'
+        },
+        {
+          time: '2020-05-27,17:39:03',
+          model: 'Fineoffset-WH5',
+          id: 247,
+          temperature_C: 35.3,
+          mic: 'CRC',
+          key: 'Fineoffset-WH5:247'
+        },
+        {
+          time: '2020-05-27,17:38:15',
+          model: 'Fineoffset-WH5',
+          id: 247,
+          temperature_C: 35.3,
+          mic: 'CRC',
+          key: 'Fineoffset-WH5:247'
+        },
+        {
+          time: '2020-05-27,17:37:27',
+          model: 'Fineoffset-WH5',
+          id: 247,
+          temperature_C: 35.3,
+          mic: 'CRC',
+          key: 'Fineoffset-WH5:247'
+        },
+        {
+          time: '2020-05-27,17:36:39',
+          model: 'Fineoffset-WH5',
+          id: 247,
+          temperature_C: 35.2,
+          mic: 'CRC',
+          key: 'Fineoffset-WH5:247'
+        },
+        {
+          time: '2020-05-27,17:35:51',
+          model: 'Fineoffset-WH5',
+          id: 247,
+          temperature_C: 34.9,
+          mic: 'CRC',
+          key: 'Fineoffset-WH5:247'
+        },
+        {
+          time: '2020-05-27,17:35:03',
+          model: 'Fineoffset-WH5',
+          id: 247,
+          temperature_C: 34.8,
+          mic: 'CRC',
+          key: 'Fineoffset-WH5:247'
+        },
+        {
+          time: '2020-05-27,17:34:15',
+          model: 'Fineoffset-WH5',
+          id: 247,
+          temperature_C: 34.9,
+          mic: 'CRC',
+          key: 'Fineoffset-WH5:247'
+        },
+        {
+          time: '2020-05-27,17:33:27',
+          model: 'Fineoffset-WH5',
+          id: 247,
+          temperature_C: 34.8,
+          mic: 'CRC',
+          key: 'Fineoffset-WH5:247'
+        },
+        {
+          time: '2020-05-27,17:32:39',
+          model: 'Fineoffset-WH5',
+          id: 247,
+          temperature_C: 35.3,
+          mic: 'CRC',
+          key: 'Fineoffset-WH5:247'
+        },
+        {
+          time: '2020-05-27,17:31:51',
+          model: 'Fineoffset-WH5',
+          id: 247,
+          temperature_C: 34.8,
+          mic: 'CRC',
+          key: 'Fineoffset-WH5:247'
+        },
+        {
+          time: '2020-05-27,17:31:03',
+          model: 'Fineoffset-WH5',
+          id: 247,
+          temperature_C: 34.9,
+          mic: 'CRC',
+          key: 'Fineoffset-WH5:247'
+        },
+        {
+          time: '2020-05-27,17:29:27',
+          model: 'Fineoffset-WH5',
+          id: 247,
+          temperature_C: 34.9,
+          mic: 'CRC',
+          key: 'Fineoffset-WH5:247'
+        },
+        {
+          time: '2020-05-27,17:28:39',
+          model: 'Fineoffset-WH5',
+          id: 247,
+          temperature_C: 34.8,
+          mic: 'CRC',
+          key: 'Fineoffset-WH5:247'
+        },
+        {
+          time: '2020-05-27,17:27:51',
+          model: 'Fineoffset-WH5',
+          id: 247,
+          temperature_C: 34.8,
+          mic: 'CRC',
+          key: 'Fineoffset-WH5:247'
+        },
+        {
+          time: '2020-05-27,17:27:03',
+          model: 'Fineoffset-WH5',
+          id: 247,
+          temperature_C: 34.8,
+          mic: 'CRC',
+          key: 'Fineoffset-WH5:247'
+        },
+        {
+          time: '2020-05-27,17:26:15',
+          model: 'Fineoffset-WH5',
+          id: 247,
+          temperature_C: 34.8,
+          mic: 'CRC',
+          key: 'Fineoffset-WH5:247'
+        },
+        {
+          time: '2020-05-27,17:25:27',
+          model: 'Fineoffset-WH5',
+          id: 247,
+          temperature_C: 35.2,
+          mic: 'CRC',
+          key: 'Fineoffset-WH5:247'
+        },
+        {
+          time: '2020-05-27,17:24:39',
+          model: 'Fineoffset-WH5',
+          id: 247,
+          temperature_C: 34.8,
+          mic: 'CRC',
+          key: 'Fineoffset-WH5:247'
+        },
+        {
+          time: '2020-05-27,17:23:51',
+          model: 'Fineoffset-WH5',
+          id: 247,
+          temperature_C: 34.8,
+          mic: 'CRC',
+          key: 'Fineoffset-WH5:247'
+        },
+        {
+          time: '2020-05-27,17:23:03',
+          model: 'Fineoffset-WH5',
+          id: 247,
+          temperature_C: 34.8,
+          mic: 'CRC',
+          key: 'Fineoffset-WH5:247'
+        },
+        {
+          time: '2020-05-27,17:22:15',
+          model: 'Fineoffset-WH5',
+          id: 247,
+          temperature_C: 34.8,
+          mic: 'CRC',
+          key: 'Fineoffset-WH5:247'
+        },
+        {
+          time: '2020-05-27,17:21:27',
+          model: 'Fineoffset-WH5',
+          id: 247,
+          temperature_C: 34.8,
+          mic: 'CRC',
+          key: 'Fineoffset-WH5:247'
+        },
+        {
+          time: '2020-05-27,17:20:39',
+          model: 'Fineoffset-WH5',
+          id: 247,
+          temperature_C: 34.8,
+          mic: 'CRC',
+          key: 'Fineoffset-WH5:247'
+        },
+        {
+          time: '2020-05-27,17:19:51',
+          model: 'Fineoffset-WH5',
+          id: 247,
+          temperature_C: 34.8,
+          mic: 'CRC',
+          key: 'Fineoffset-WH5:247'
+        },
+        {
+          time: '2020-05-27,17:19:03',
+          model: 'Fineoffset-WH5',
+          id: 247,
+          temperature_C: 34.8,
+          mic: 'CRC',
+          key: 'Fineoffset-WH5:247'
+        },
+        {
+          time: '2020-05-27,17:18:15',
+          model: 'Fineoffset-WH5',
+          id: 247,
+          temperature_C: 34.8,
+          mic: 'CRC',
+          key: 'Fineoffset-WH5:247'
+        },
+        {
+          time: '2020-05-27,17:17:27',
+          model: 'Fineoffset-WH5',
+          id: 247,
+          temperature_C: 34.8,
+          mic: 'CRC',
+          key: 'Fineoffset-WH5:247'
+        },
+        {
+          time: '2020-05-27,17:16:39',
+          model: 'Fineoffset-WH5',
+          id: 247,
+          temperature_C: 34.8,
+          mic: 'CRC',
+          key: 'Fineoffset-WH5:247'
+        },
+        {
+          time: '2020-05-27,17:15:51',
+          model: 'Fineoffset-WH5',
+          id: 247,
+          temperature_C: 35.2,
+          mic: 'CRC',
+          key: 'Fineoffset-WH5:247'
+        },
+        {
+          time: '2020-05-27,17:15:03',
+          model: 'Fineoffset-WH5',
+          id: 247,
+          temperature_C: 35.2,
+          mic: 'CRC',
+          key: 'Fineoffset-WH5:247'
+        },
+        {
+          time: '2020-05-27,17:14:15',
+          model: 'Fineoffset-WH5',
+          id: 247,
+          temperature_C: 34.8,
+          mic: 'CRC',
+          key: 'Fineoffset-WH5:247'
+        },
+        {
+          time: '2020-05-27,17:13:27',
+          model: 'Fineoffset-WH5',
+          id: 247,
+          temperature_C: 34.8,
+          mic: 'CRC',
+          key: 'Fineoffset-WH5:247'
+        },
+        {
+          time: '2020-05-27,17:12:39',
+          model: 'Fineoffset-WH5',
+          id: 247,
+          temperature_C: 35.2,
+          mic: 'CRC',
+          key: 'Fineoffset-WH5:247'
+        },
+        {
+          time: '2020-05-27,17:11:51',
+          model: 'Fineoffset-WH5',
+          id: 247,
+          temperature_C: 34.8,
+          mic: 'CRC',
+          key: 'Fineoffset-WH5:247'
+        },
+        {
+          time: '2020-05-27,17:11:03',
+          model: 'Fineoffset-WH5',
+          id: 247,
+          temperature_C: 34.8,
+          mic: 'CRC',
+          key: 'Fineoffset-WH5:247'
+        },
+        {
+          time: '2020-05-27,17:10:15',
+          model: 'Fineoffset-WH5',
+          id: 247,
+          temperature_C: 34.8,
+          mic: 'CRC',
+          key: 'Fineoffset-WH5:247'
+        },
+        {
+          time: '2020-05-27,17:09:27',
+          model: 'Fineoffset-WH5',
+          id: 247,
+          temperature_C: 34.8,
+          mic: 'CRC',
+          key: 'Fineoffset-WH5:247'
+        },
+        {
+          time: '2020-05-27,17:08:39',
+          model: 'Fineoffset-WH5',
+          id: 247,
+          temperature_C: 34.8,
+          mic: 'CRC',
+          key: 'Fineoffset-WH5:247'
+        },
+        {
+          time: '2020-05-27,17:07:51',
+          model: 'Fineoffset-WH5',
+          id: 247,
+          temperature_C: 34.8,
+          mic: 'CRC',
+          key: 'Fineoffset-WH5:247'
+        },
+        {
+          time: '2020-05-27,17:07:03',
+          model: 'Fineoffset-WH5',
+          id: 247,
+          temperature_C: 35.2,
+          mic: 'CRC',
+          key: 'Fineoffset-WH5:247'
+        },
+        {
+          time: '2020-05-27,17:06:15',
+          model: 'Fineoffset-WH5',
+          id: 247,
+          temperature_C: 34.8,
+          mic: 'CRC',
+          key: 'Fineoffset-WH5:247'
+        },
+        {
+          time: '2020-05-27,17:05:27',
+          model: 'Fineoffset-WH5',
+          id: 247,
+          temperature_C: 34.8,
+          mic: 'CRC',
+          key: 'Fineoffset-WH5:247'
+        },
+        {
+          time: '2020-05-27,17:04:39',
+          model: 'Fineoffset-WH5',
+          id: 247,
+          temperature_C: 34.8,
+          mic: 'CRC',
+          key: 'Fineoffset-WH5:247'
+        },
+        {
+          time: '2020-05-27,17:03:51',
+          model: 'Fineoffset-WH5',
+          id: 247,
+          temperature_C: 34.8,
+          mic: 'CRC',
+          key: 'Fineoffset-WH5:247'
+        },
+        {
+          time: '2020-05-27,17:03:03',
+          model: 'Fineoffset-WH5',
+          id: 247,
+          temperature_C: 34.8,
+          mic: 'CRC',
+          key: 'Fineoffset-WH5:247'
+        },
+        {
+          time: '2020-05-27,17:02:15',
+          model: 'Fineoffset-WH5',
+          id: 247,
+          temperature_C: 34.8,
+          mic: 'CRC',
+          key: 'Fineoffset-WH5:247'
+        },
+        {
+          time: '2020-05-27,17:01:27',
+          model: 'Fineoffset-WH5',
+          id: 247,
+          temperature_C: 34.8,
+          mic: 'CRC',
+          key: 'Fineoffset-WH5:247'
+        },
+        {
+          time: '2020-05-27,17:00:39',
+          model: 'Fineoffset-WH5',
+          id: 247,
+          temperature_C: 35.2,
+          mic: 'CRC',
+          key: 'Fineoffset-WH5:247'
+        },
+        {
+          time: '2020-05-27,16:59:51',
+          model: 'Fineoffset-WH5',
+          id: 247,
+          temperature_C: 34.8,
+          mic: 'CRC',
+          key: 'Fineoffset-WH5:247'
+        },
+        {
+          time: '2020-05-27,16:59:03',
+          model: 'Fineoffset-WH5',
+          id: 247,
+          temperature_C: 34.9,
+          mic: 'CRC',
+          key: 'Fineoffset-WH5:247'
+        },
+        {
+          time: '2020-05-27,16:58:15',
+          model: 'Fineoffset-WH5',
+          id: 247,
+          temperature_C: 35.2,
+          mic: 'CRC',
+          key: 'Fineoffset-WH5:247'
+        },
+        {
+          time: '2020-05-27,16:57:27',
+          model: 'Fineoffset-WH5',
+          id: 247,
+          temperature_C: 34.9,
+          mic: 'CRC',
+          key: 'Fineoffset-WH5:247'
+        },
+        {
+          time: '2020-05-27,16:56:39',
+          model: 'Fineoffset-WH5',
+          id: 247,
+          temperature_C: 34.8,
+          mic: 'CRC',
+          key: 'Fineoffset-WH5:247'
+        },
+        {
+          time: '2020-05-27,16:55:51',
+          model: 'Fineoffset-WH5',
+          id: 247,
+          temperature_C: 34.8,
+          mic: 'CRC',
+          key: 'Fineoffset-WH5:247'
+        },
+        {
+          time: '2020-05-27,16:55:03',
+          model: 'Fineoffset-WH5',
+          id: 247,
+          temperature_C: 34.8,
+          mic: 'CRC',
+          key: 'Fineoffset-WH5:247'
+        },
+        {
+          time: '2020-05-27,16:54:15',
+          model: 'Fineoffset-WH5',
+          id: 247,
+          temperature_C: 35.2,
+          mic: 'CRC',
+          key: 'Fineoffset-WH5:247'
+        },
+        {
+          time: '2020-05-27,16:53:27',
+          model: 'Fineoffset-WH5',
+          id: 247,
+          temperature_C: 34.9,
+          mic: 'CRC',
+          key: 'Fineoffset-WH5:247'
+        },
+        {
+          time: '2020-05-27,16:52:39',
+          model: 'Fineoffset-WH5',
+          id: 247,
+          temperature_C: 34.9,
+          mic: 'CRC',
+          key: 'Fineoffset-WH5:247'
+        },
+        {
+          time: '2020-05-27,16:51:51',
+          model: 'Fineoffset-WH5',
+          id: 247,
+          temperature_C: 34.9,
+          mic: 'CRC',
+          key: 'Fineoffset-WH5:247'
+        },
+        {
+          time: '2020-05-27,16:51:03',
+          model: 'Fineoffset-WH5',
+          id: 247,
+          temperature_C: 34.8,
+          mic: 'CRC',
+          key: 'Fineoffset-WH5:247'
+        },
+        {
+          time: '2020-05-27,16:50:15',
+          model: 'Fineoffset-WH5',
+          id: 247,
+          temperature_C: 34.8,
+          mic: 'CRC',
+          key: 'Fineoffset-WH5:247'
+        },
+        {
+          time: '2020-05-27,16:49:27',
+          model: 'Fineoffset-WH5',
+          id: 247,
+          temperature_C: 34.8,
+          mic: 'CRC',
+          key: 'Fineoffset-WH5:247'
+        },
+        {
+          time: '2020-05-27,16:48:39',
+          model: 'Fineoffset-WH5',
+          id: 247,
+          temperature_C: 35.2,
+          mic: 'CRC',
+          key: 'Fineoffset-WH5:247'
+        },
+        {
+          time: '2020-05-27,16:47:51',
+          model: 'Fineoffset-WH5',
+          id: 247,
+          temperature_C: 34.9,
+          mic: 'CRC',
+          key: 'Fineoffset-WH5:247'
+        },
+        {
+          time: '2020-05-27,16:47:03',
+          model: 'Fineoffset-WH5',
+          id: 247,
+          temperature_C: 35.3,
+          mic: 'CRC',
+          key: 'Fineoffset-WH5:247'
+        },
+        {
+          time: '2020-05-27,16:46:15',
+          model: 'Fineoffset-WH5',
+          id: 247,
+          temperature_C: 34.9,
+          mic: 'CRC',
+          key: 'Fineoffset-WH5:247'
+        },
+        {
+          time: '2020-05-27,16:45:27',
+          model: 'Fineoffset-WH5',
+          id: 247,
+          temperature_C: 34.9,
+          mic: 'CRC',
+          key: 'Fineoffset-WH5:247'
+        },
+        {
+          time: '2020-05-27,16:44:39',
+          model: 'Fineoffset-WH5',
+          id: 247,
+          temperature_C: 35.3,
+          mic: 'CRC',
+          key: 'Fineoffset-WH5:247'
+        }
+      ],
+
       'Model1:123@1': {
         latest: {
           time: '2020-05-08,15:14:25',
@@ -57,6 +852,14 @@ describe('DB controller', () => {
       }
     };
 
+  let redis;
+  before(async () => {
+    // setup db
+    redis = db.setup({ db: 1 });
+    expect(await redis.keys('*')).to.have.length(0);
+  });
+
+  describe('storeReading', () => {
     beforeEach(async () => {
       await db.hsetObject(toName('Model1:123@1'), fixtures['Model1:123@1']);
       await db.hsetObject(toName(fixtures.subscribedDevice.latest.key), fixtures.subscribedDevice);
@@ -100,7 +903,7 @@ describe('DB controller', () => {
         temperature_C: 15.3
       };
       await db.storeReading(newReading);
-      const readings = await redis.zscan(`readings.${key}`, 0);
+      const readings = await redis.zscan(toName(key, 'readings'), 0);
       expect(readings).to.deep.equal(['0', [JSON.stringify(newReading), JSON.stringify(Date.parse(newReading.time) / 1000)]]);
       const deviceEntry = await redis.hgetall(toName(key));
       expect(deviceEntry).to.deep.equal(toRedisResult({
@@ -150,5 +953,23 @@ describe('DB controller', () => {
         time: (now+180)*1000
       }]);
     });
+
+    it('handles real world data', async () => {
+      const key = 'Fineoffset-WH5:247';
+      Promise.all(fixtures.realWorldData.map( sample => db.redis.zadd(
+        toName(key, 'readings'),
+        Math.floor(new Date(sample.time).valueOf()/1000),
+        JSON.stringify(sample)
+      )));
+
+      await db.createIndex(key, {
+        since: Math.floor(new Date('2020-05-27,16:44:39').valueOf()/1000),
+        until: Math.floor(new Date('2020-05-27,18:04:39').valueOf()/1000),
+      });
+      const {data} = await db.getReadings({device: key, type: '6m'});
+      expect(data).to.have.length(14);
+      expect(data[0]).to.deep.equal({temperature_C: {min: 34.8, max: 35.2, average: 34.86666666666666}, time: 1590595539000});
+    });
+
   });
 });
