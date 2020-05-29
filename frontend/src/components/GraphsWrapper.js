@@ -43,19 +43,51 @@ class GraphsWrapper extends Component {
     }
   }
 
+  handleRawReadings = (readings) => {
+    const data = {temperature: [], humidity: []};
+    readings.forEach( sample => {
+      const {time, key, temperature_C, temperature_F, humidity} = sample;
+      const item = { x: new Date(time), group: key };
+      const temp = temperature_C || (temperature_F ? FtoC(temperature_F) : null);
+      if (!temp && !humidity) {
+        console.log(`Bad Reading for ${key}: `, sample);
+        return;
+      }
+      if (temp) { data.temperature.push({ ...item, y: temp }); }
+      if (humidity) { data.humidity.push({ ...item, y: humidity }); }
+    });
+    this.state.data.temperature.add(data.temperature);
+    this.state.data.humidity.add(data.humidity);
+    return readings;
+  }
+
+
   handleReadings = (key, readings) => {
     const data = {temperature: [], humidity: []};
-    const temperatures = []
+    const temperatures = [];
+    const humidities = [];
     readings.forEach( sample => {
-      const {time, temperature_C, humidity} = sample;
+      const {time, temperature_C, humidity, temperature_F} = sample;
       const x = new Date(time);
-      if(temperature_C) {
+      if (temperature_C) {
         temperatures.push({x, y: temperature_C.average, group: key},
                           {x, y: temperature_C.min, group: `min-${key}`},
                           {x, y: temperature_C.max, group: `max-${key}`});
+      } else if (temperature_F) {
+        temperatures.push({x, y: FtoC(temperature_F.average), group: key},
+                          {x, y: FtoC(temperature_F.min), group: `min-${key}`},
+                          {x, y: FtoC(temperature_F.max), group: `max-${key}`});
+      }
+      if (humidity) {
+        humidities.push({x, y: humidity.average, group: key},
+                        {x, y: humidity.min, group: `min-${key}`},
+                        {x, y: humidity.max, group: `max-${key}`});
+
       }
     });
     this.state.data.temperature.add(temperatures);
+    this.state.data.humidity.add(temperatures);
+
     return readings;
   }
 
@@ -112,7 +144,7 @@ class GraphsWrapper extends Component {
     this.setState({lastUpdate: Math.floor(Date.now()/1000)});
     const readings = await Promise.all(
       Object.keys(devices).map(
-        device => getReadings(device, { since, type: '6m' }).then(this.handleReadings.bind(null, device))
+        device => getReadings(device, { since}).then(this.handleRawReadings)
       )
     );
     console.log(readings.reduce( (sum, i) => sum+=i.length, 0), ' new items since ', new Date(since* 1000));
