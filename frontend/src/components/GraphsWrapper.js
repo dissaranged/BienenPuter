@@ -86,7 +86,7 @@ class GraphsWrapper extends Component {
       }
     });
     this.state.data.temperature.add(temperatures);
-    this.state.data.humidity.add(temperatures);
+    this.state.data.humidity.add(humidities);
 
     return readings;
   }
@@ -95,7 +95,11 @@ class GraphsWrapper extends Component {
     const {devices, groups} = this.state;
     const existing = groups.clear();
     Object.keys(devices).forEach((key) => {
-      const color = devices[key].color || `#${Math.floor(Math.random()*0xffffff).toString(16)}`;
+      const color = devices[key].color || `#${Math.floor(Math.random()*0xeeeeee).toString(16).padStart(6,'0')}`;
+      const [r,g,b] = color.match(/\#(..)(..)(..)/).slice(1).map( c => parseInt(c, 16));
+      function rgb(r,g,b) { return `#${r.toString(16).padStart(2,'0')}${g.toString(16).padStart(2,'0')}${b.toString(16).padStart(2,'0')}`}
+      function darken(c) { return Math.floor( parseInt(c,16) * 0.9 ).toString(16).padStart(2,'0'); }
+      const darkerColor = `#${darken(r)}${darken(g)}${darken(b)}`;
       const alias = devices[key].alias || key;
       groups.add([
         {
@@ -104,7 +108,7 @@ class GraphsWrapper extends Component {
           style: 'stroke-width:0px',
           options: {
             excludeFromLegend: true,
-            shaded: { orientation: 'group', groupId: key, style: 'fill:red'},
+            shaded: { orientation: 'group', groupId: key, style: `fill:${rgb((r +64) %255,g,b)}`},
             drawPoints: false,
           }
         }, {
@@ -112,7 +116,7 @@ class GraphsWrapper extends Component {
           content: alias,
           style: `stroke:${color};fill:${color}`,
           options: {
-            drawPoints: { styles: `stroke:${color};fill:${color}` }
+            drawPoints: { styles: `stroke:${darkerColor};fill:${rgb(r*0.9,g*0.9,b*0.9)}` }
           }
         }, {
           id: `min-${key}`,
@@ -120,7 +124,7 @@ class GraphsWrapper extends Component {
           style: 'stroke-width:0px',
           options: {
             excludeFromLegend: true,
-            shaded: { orientation: 'group', groupId: key, style: 'fill:green' },
+            shaded: { orientation: 'group', groupId: key, style: `fill:${rgb(r,(g +64) %255,b)}` },
             drawPoints: false,
           }
         }
@@ -163,7 +167,6 @@ class GraphsWrapper extends Component {
   toggleAutoUpdate = () =>  this.setState({
     autoUpdate: this.state.autoUpdate ? 0 : 10
   }, this.doAutoUpdate);
-
   render() {
     const { data, groups, autoUpdate } = this.state;
     return (
@@ -178,12 +181,12 @@ class GraphsWrapper extends Component {
         </Row>
         <Row>
           {Object.keys(data).length > 0 ? Object.entries(data).map( ([type, dataset]) => (
-            <Graph key={type} type={type} groups={groups} dataset={dataset}/>
+            <Graph key={type} type={type} groups={groups} dataset={dataset} />
           )) : ( <em>Nothing to see :(</em> ) }
         </Row>
       </Col>
-    );
-  }
+          );
+    }
   }
 
 
