@@ -5,7 +5,10 @@ import DeviceEntry from './DeviceEntry';
 
 class DeviceManager extends Component {
 
-  state = { visible: true }
+  state = {
+    visible: true,
+    deviceFilter: null
+  }
   componentDidMount() {
     this.props.loadDevices();
   }
@@ -15,6 +18,7 @@ class DeviceManager extends Component {
 
   render() {
     const { devices } = this.props;
+    const { deviceFilter } = this.state;
     return this.state.visible ? (
       <Col sm="2">
         <Row>
@@ -22,18 +26,41 @@ class DeviceManager extends Component {
           <h3>DeviceManager</h3>
           </Col>
           <Col sm="3">
-            <Button onClick={this.props.loadDevices}>Reload</Button>
             <Button onClick={this.hide}>Hide</Button>
           </Col>
         </Row>
         <Row>
-          {devices.length > 0 ? devices.map( 
-            device => (
-              <DeviceEntry key={device.key.replace('@', 'AT').replace(':','COLON')} 
-                           device={device}
-                           onSaveOptions={this.handleChangeOptions}
-              />) 
-          ) : <em>Loading Devices ....</em>}
+          <Col>
+            <Button onClick={this.handleFilterChange}>Show {deviceFilter || 'All'}</Button>
+          </Col>
+          <Col>
+            <Button onClick={this.props.loadDevices}>Reload</Button>
+          </Col>
+        </Row>
+        <Row>
+          {
+            devices.length > 0 ? devices
+           .filter( device => {
+             console.log(deviceFilter)
+             switch(deviceFilter) {
+             case 'subscribed':
+               console.log('Subs onlu')
+               return !!device.subscribed;
+             case 'unsubscribed':
+               console.log('Not Subs only')
+               return !device.subscribed;
+             default:
+               console.log('All')
+               return true;
+             }
+           })
+           .map( device => (
+             <DeviceEntry key={device.key.replace('@', 'AT').replace(':','COLON')}
+                          device={device}
+                          onSaveOptions={this.handleChangeOptions}
+             />)
+               ) : <em>Loading Devices ....</em>
+          }
         </Row>
       </Col>
     ) : (
@@ -42,7 +69,16 @@ class DeviceManager extends Component {
       </Col>
     );
   }
-  
+
+  handleFilterChange = () => {
+    const {deviceFilter} = this.state;
+    const states = ['subscribed', 'unsubscribed'];
+    this.setState({
+      deviceFilter: states[ states.indexOf(deviceFilter) +1 ]
+    });
+    console.log(states, deviceFilter, states[ states.indexOf(deviceFilter) +1 ])
+  };
+
   handleChangeOptions = async (key, options) => {
     await setDeviceOptions(key, options);
     this.props.loadDevices();
