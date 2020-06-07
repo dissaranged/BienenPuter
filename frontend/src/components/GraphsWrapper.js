@@ -2,7 +2,7 @@ import React, {Component} from 'react';
 import { DataSet } from 'vis-timeline/standalone';
 import deepEqual from 'fast-deep-equal';
 import { getReadings } from '../actions';
-
+import moment from 'moment';
 import { Row, Col, Input, Label } from 'reactstrap';
 import Graph from './Graph';
 
@@ -47,7 +47,7 @@ class GraphsWrapper extends Component {
     const data = {temperature: [], humidity: []};
     readings.forEach( sample => {
       const {time, key, temperature_C, temperature_F, humidity} = sample;
-      const item = { x: new Date(time), group: key };
+      const item = { x: moment(time), group: key };
       const temp = temperature_C || (temperature_F ? FtoC(temperature_F) : null);
       if (typeof temp === 'undefined'  && typeof humidity === 'undefined') {
         console.log(`Bad Reading for ${key}: `, sample);
@@ -68,7 +68,7 @@ class GraphsWrapper extends Component {
     const humidities = [];
     readings.forEach( sample => {
       const {time, temperature_C, humidity, temperature_F} = sample;
-      const x = new Date(time);
+      const x = moment(time);
       if (typeof temperature_C !== 'undefined') {
         temperatures.push({x, y: temperature_C.average, group: key},
                           {x, y: temperature_C.min, group: `min-${key}`},
