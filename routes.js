@@ -1,4 +1,4 @@
-const { plugins: { queryParser } } = require('restify');
+const { plugins: { queryParser, serveStaticFiles } } = require('restify');
 const db = require('./redis');
 
 function finalize(f) {
@@ -39,6 +39,7 @@ function routes (server) {
     res.send(200, result.data, {'x-total': result.total, 'x-per-page': result.perPage, 'x-page-offset': result.pageOffset}); // do not like this, default perPage is now here and in db.getReadings
   }));
 
+  server.get('/frontend/*', serveStaticFiles('./frontend/build/'));
 }
 
 module.exports = routes;
