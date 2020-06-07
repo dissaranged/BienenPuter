@@ -41,16 +41,12 @@ class DeviceManager extends Component {
           {
             devices.length > 0 ? devices
            .filter( device => {
-             console.log(deviceFilter)
              switch(deviceFilter) {
              case 'subscribed':
-               console.log('Subs onlu')
                return !!device.subscribed;
              case 'unsubscribed':
-               console.log('Not Subs only')
                return !device.subscribed;
              default:
-               console.log('All')
                return true;
              }
            })
