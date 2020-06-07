@@ -49,7 +49,7 @@ class GraphsWrapper extends Component {
       const {time, key, temperature_C, temperature_F, humidity} = sample;
       const item = { x: new Date(time), group: key };
       const temp = temperature_C || (temperature_F ? FtoC(temperature_F) : null);
-      if (!temp && !humidity) {
+      if (typeof temp === 'undefined'  && typeof humidity === 'undefined') {
         console.log(`Bad Reading for ${key}: `, sample);
         return;
       }
@@ -69,16 +69,16 @@ class GraphsWrapper extends Component {
     readings.forEach( sample => {
       const {time, temperature_C, humidity, temperature_F} = sample;
       const x = new Date(time);
-      if (temperature_C) {
+      if (typeof temperature_C !== 'undefined') {
         temperatures.push({x, y: temperature_C.average, group: key},
                           {x, y: temperature_C.min, group: `min-${key}`},
                           {x, y: temperature_C.max, group: `max-${key}`});
-      } else if (temperature_F) {
+      } else if (typeof temperature_F  !== 'undefined') {
         temperatures.push({x, y: FtoC(temperature_F.average), group: key},
                           {x, y: FtoC(temperature_F.min), group: `min-${key}`},
                           {x, y: FtoC(temperature_F.max), group: `max-${key}`});
       }
-      if (humidity) {
+      if (typeof humidity  !== 'undefined') {
         humidities.push({x, y: humidity.average, group: key},
                         {x, y: humidity.min, group: `min-${key}`},
                         {x, y: humidity.max, group: `max-${key}`});
