@@ -1,5 +1,6 @@
 import React, {Component} from 'react';
-import {Row, Col} from 'reactstrap';
+
+import { OverflowList } from '@blueprintjs/core';
 
 export default class Legend extends Component {
   state = {
@@ -9,35 +10,43 @@ export default class Legend extends Component {
     const {groups, graph} = this.props;
     if(!graph || !groups)
       return <em>...</em>;
+
+    let items = groups
+        .map(group => group)
+        .filter(group => !group.options.excludeFromLegend);
+
     return (
-      <Row>
-        {groups.map( group => {
-          if(group.options.excludeFromLegend)
-            return null;
-          const legend = graph.getLegend(group.id, 30, 30,);
-          if(!legend.icon) {
-            return null;
-          }
-          const visible = !this.state.hidden[group.id]; // use state for this
-          legend.icon.setAttributeNS(null, "class", "legend-icon");
-          return (
-            <Col key={group.id} onClick={this.handleToggleGroup(group.id)} xs="12" sm="6" md="4" lg="2">
-              <Row >
-                   <div className="vis-timeline col legend-icon" dangerouslySetInnerHTML={{__html:  legend.icon.outerHTML}} />
-                   <Col>
-                     { visible ? (
-                       <span >{group.content}</span>
-                       ) : (
-                         <del>{group.content}</del>
-                       )}
-                   </Col>
-                 </Row>
-            </Col>
-          );
-        })}
-      </Row>
+      <div className="legend">
+        <OverflowList items={items} visibleItemRenderer={this.renderVisibleItem} overflowRenderer={this.renderOverflow} />
+      </div>
     );
   }
+
+  renderVisibleItem = group => {
+    let icon = this.icon(group);
+    if (!icon) {
+      return null;
+    }
+    let visible = !this.state.hidden[group.id];
+    return (
+      <div onClick={this.handleToggleGroup(group.id)}>
+        {icon} {visible ? <span>{group.content}</span> : <del>{group.content}</del>}
+      </div>
+    );
+  }
+
+  icon(group) {
+    let legend = this.props.graph.getLegend(group.id, 20, 20,);
+    if (!legend.icon) {
+      return null;
+    }
+    return <svg width="20" height="20" className="vis-timeline" dangerouslySetInnerHTML={{__html: legend.icon.innerHTML}} />;
+  }
+
+  renderOverflow = groups => {
+    // TODO: render a menu or something, with the groups that didn't fit.
+  }
+
   handleToggleGroup = (id) => () => {
     const { graph } = this.props;
     const visible = !graph.isGroupVisible(id);

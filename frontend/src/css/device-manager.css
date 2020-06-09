@@ -1,0 +1,48 @@
+
+.device-manager > h4 {
+    padding-top: 0.6em;
+    text-align: center;
+}
+
+.device-manager-toggle, .device-manager-refresh {
+    margin-top: 0.5em;
+}
+
+.device-manager-toggle {
+    float: left;
+}
+
+.device-manager-refresh {
+    float: right;
+}
+
+.device-list {
+    padding: 1em;
+}
+
+.device-list > .device {
+    position: relative;
+    margin: 1em 0 0.5em 0;
+}
+
+.device-list > .device > .header {
+    display: grid;
+    grid-template-columns: 4fr 2fr;
+}
+
+.device-list > .device > .header > .name {
+    padding: 0.4em 0 0 0;
+}
+
+.device-list > .device > .header > .controls {
+    text-align: right;
+}
+
+.device-list > .device .color-indicator {
+    position: absolute;
+    left: -0.7em;
+    top: 0.7em;
+    height: 0.5em;
+    width: 0.5em;
+    border-radius: 1em;
+}

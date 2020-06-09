@@ -1,5 +1,4 @@
 import React, {Component} from 'react';
-import {Row, Col, Card, CardBody, CardHeader} from 'reactstrap';
 import { Graph2d } from 'vis-timeline/standalone';
 import Legend from './Legend';
 
@@ -37,8 +36,9 @@ export default class Graph extends Component {
         left : {
           title: {text: unit[type]},
           range: range[type],
-        }
+        },
       },
+      clickToUse: true,
       height: 400,
     };
 
@@ -64,19 +64,13 @@ export default class Graph extends Component {
     const {type} = this.props;
     const { graph } = this.state;
     return (
-      <Col sm="12">
-        <Card>
-          <CardHeader>
-            <Row>
-              <Col sm="3"><h2>{type}</h2></Col>
-              <Col><Legend groups={this.props.groups} graph={graph}/></Col>
-            </Row>
-          </CardHeader>
-          <CardBody>
-            <div ref={this.ref}/>
-          </CardBody>
-        </Card>
-      </Col>
+      <div className="graph">
+        <div className="header">
+          <div className="title">{type}</div>
+          <Legend groups={this.props.groups} graph={graph}/>
+        </div>
+        <div ref={this.ref} />
+      </div>
     );
   }
 }

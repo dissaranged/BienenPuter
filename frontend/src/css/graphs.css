@@ -1,0 +1,28 @@
+
+.graph-wrapper > .header {
+    display: grid;
+    grid-template-columns: 3fr 1fr;
+    padding: 0.5em 5px;
+}
+
+.graph-wrapper > .header > .controls {
+    text-align: right;
+}
+
+.graph-wrapper > .content > .graph {
+    margin: 1em;
+}
+
+.graph-wrapper > .content > .graph > .header {
+    background: #E1E8ED;
+    padding: 0.5em;
+    border: solid 1px #ccc;
+    border-bottom-style: none;
+    display: grid;
+    grid-template-columns: 2fr 3fr;
+}
+
+.graph-wrapper > .content > .graph > .header > .title {
+    font-weight: bold;
+    text-transform: capitalize;
+}

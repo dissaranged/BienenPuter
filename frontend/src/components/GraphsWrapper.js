@@ -3,8 +3,9 @@ import { DataSet } from 'vis-timeline/standalone';
 import deepEqual from 'fast-deep-equal';
 import { getReadings } from '../actions';
 import moment from 'moment';
-import { Row, Col, Input, Label } from 'reactstrap';
 import Graph from './Graph';
+
+import { H4, Button, Tooltip } from "@blueprintjs/core";
 
 function FtoC (f) {
   return (f - 32) * 5 / 9;
@@ -170,21 +171,29 @@ class GraphsWrapper extends Component {
   render() {
     const { data, groups, autoUpdate } = this.state;
     return (
-      <Col>
-        <Row >
-          <Col sm="8" ><h3>Graphs </h3></Col>
-          <Col sm={{ size: 1, offset: 1}} >
-            <Label>
-              <Input type="checkbox" onChange={this.toggleAutoUpdate} checked={!!autoUpdate}/>Update!
-            </Label>
-          </Col>
-        </Row>
-        <Row>
+      <div className="graph-wrapper">
+        <div className="header">
+          <H4>Graphs</H4>
+          <div className="controls">
+            <Tooltip
+              content="When enabled, automatically refreshes graph data periodically"
+            >
+              <Button
+                active={!!autoUpdate}
+                icon="automatic-updates"
+                onClick={this.toggleAutoUpdate}
+              >
+                {autoUpdate ? 'Updates automatically' : 'Enable automatic update'}
+              </Button>
+            </Tooltip>
+          </div>
+        </div>
+        <div className="content">
           {Object.keys(data).length > 0 ? Object.entries(data).map( ([type, dataset]) => (
             <Graph key={type} type={type} groups={groups} dataset={dataset} />
           )) : ( <em>Nothing to see :(</em> ) }
-        </Row>
-      </Col>
+        </div>
+      </div>
           );
     }
   }
