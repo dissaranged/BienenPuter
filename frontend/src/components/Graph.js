@@ -8,6 +8,10 @@ const unit = {
   humidity: 'humidity in %',
 };
 
+const range = {
+  temperature: { min: -50, max: 80 },
+  humidity: { min: 0, max: 100 },
+};
 
 export default class Graph extends Component {
   constructor(props) {
@@ -31,7 +35,8 @@ export default class Graph extends Component {
       dataAxis: {
         showMinorLabels: true,
         left : {
-          title: {text: unit[type]}
+          title: {text: unit[type]},
+          range: range[type],
         }
       },
       height: 400,
