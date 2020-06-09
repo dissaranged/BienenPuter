@@ -2,7 +2,7 @@
 .graph-wrapper > .header {
     display: grid;
     grid-template-columns: 3fr 1fr;
-    padding: 0.5em 5px;
+    padding: 0.5em 1em;
 }
 
 .graph-wrapper > .header > .controls {
