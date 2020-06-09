@@ -13,14 +13,14 @@ function App() {
       ({ latest: {time: a} }, { latest: {time: b} }) => new Date(b) - new Date(a)
     );
     setDevices(devices);
-};
+  };
 
-return (
-  <div className="App">
-    <header>
-      <Container>
-        <h2>Sensor Suite</h2>
-      </Container></header>
+  return (
+    <div className="App">
+      <header>
+        <Container>
+          <h2>Sensor Suite</h2>
+        </Container></header>
       <Row>
         <DeviceManager devices={devices} loadDevices={loadDevices}/>
         <GraphsWrapper devices={devices}/>

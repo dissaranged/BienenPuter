@@ -1,5 +1,5 @@
 import React, {Component} from 'react';
-import {Row, Col, Container} from 'reactstrap';
+import {Row, Col} from 'reactstrap';
 
 export default class Legend extends Component {
   state = {
@@ -39,14 +39,14 @@ export default class Legend extends Component {
     );
   }
   handleToggleGroup = (id) => () => {
-    const { groups, graph } = this.props;
+    const { graph } = this.props;
     const visible = !graph.isGroupVisible(id);
     const visibility = {
       [id]: visible,
       [`max-${id}`]: visible,
       [`min-${id}`]: visible,
     };
-    const result = graph.setOptions({groups: {visibility}});
+    graph.setOptions({groups: {visibility}});
     this.setState({ hidden: {...this.state.hidden, [id]: !visible}});
   }
 }

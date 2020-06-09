@@ -63,7 +63,7 @@ class GraphsWrapper extends Component {
 
 
   handleReadings = (key, readings) => {
-    const data = {temperature: [], humidity: []};
+    // const data = {temperature: [], humidity: []};
     const temperatures = [];
     const humidities = [];
     readings.forEach( sample => {
@@ -96,7 +96,7 @@ class GraphsWrapper extends Component {
     const existing = groups.clear();
     Object.keys(devices).forEach((key) => {
       const color = devices[key].color || `#${Math.floor(Math.random()*0xeeeeee).toString(16).padStart(6,'0')}`;
-      const [r,g,b] = color.match(/\#(..)(..)(..)/).slice(1).map( c => parseInt(c, 16));
+      const [r,g,b] = color.match(/#(..)(..)(..)/).slice(1).map( c => parseInt(c, 16));
       function rgb(r,g,b) { return `#${r.toString(16).padStart(2,'0')}${g.toString(16).padStart(2,'0')}${b.toString(16).padStart(2,'0')}`}
       function darken(c) { return Math.floor( parseInt(c,16) * 0.9 ).toString(16).padStart(2,'0'); }
       const darkerColor = `#${darken(r)}${darken(g)}${darken(b)}`;
