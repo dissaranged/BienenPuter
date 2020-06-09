@@ -1,17 +1,97 @@
-.App {
-    background-color: #775517;
+@import "~normalize.css";
+@import "~@blueprintjs/core/lib/css/blueprint.css";
+@import "~@blueprintjs/icons/lib/css/blueprint-icons.css";
+
+.app {
+    display: grid;
+    grid-template-columns: [sidebar-start] fit-content(400px) [content-start] 4fr;
+    grid-template-rows: 100vh;
+}
+
+.app.collapsed > .device-manager {
+    position: absolute;
+    z-index: 100;
+}
+
+.app.collapsed {
+    grid-template-columns: [sidebar-start] 0fr [content-start] 1fr;
+    /* TODO: animation */
+}
+
+.app.uncollapsed {
+    /* TODO: animation */
+}
+
+.device-manager {
+    overflow-y: auto;
+    border-right: solid 1px #ccc;
+    grid-column-start: sidebar-start;
+    padding: 0 5px;
+}
+
+.app.collapsed > .device-manager {
+    border-right: none;
+}
+
+.device-manager > h4 {
+    padding: 0.5em 0 0 0.7em;
+}
+
+.data-views {
+    overflow-y: auto;
+    grid-column-start: content-start;
+}
+
+.device-list {
     padding: 1em;
 }
 
-.App header {
-    background-color: #996823
+.device-list > .device {
+    position: relative;
+    margin: 1em 0 0.5em 0;
 }
 
-.App .header {
-    background-color: #c199641a;
+.device-list > .device > .header {
+    display: grid;
+    grid-template-columns: 4fr 2fr;
+    vertical-align: baseline;
 }
 
-.btn {
-    font-size: small;
-    padding: 3px;
+.device-list > .device > .header > .name {
+    padding: 0.4em 0 0 0;
 }
+
+.device-list > .device > .header > .controls {
+    text-align: right;
+}
+
+.device-list > .device .color-indicator {
+    position: absolute;
+    left: -0.7em;
+    top: 0.7em;
+    height: 0.5em;
+    width: 0.5em;
+    border-radius: 1em;
+}
+
+.device-manager-toggle {
+    margin: 0.5em;
+}
+
+/* .App { */
+/*     background-color: #775517; */
+/*     padding: 1em; */
+/* } */
+
+/* .App header { */
+/*     background-color: #996823 */
+/* } */
+
+/* .App .header { */
+/*     background-color: #c199641a; */
+/* } */
+
+/* .btn { */
+/*     font-size: small; */
+/*     padding: 3px; */
+/* } */

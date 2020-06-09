@@ -1,7 +1,6 @@
 import React, {useState} from 'react';
 import './App.css';
 import { getDevices } from './actions.js';
-import { Container, Row } from 'reactstrap';
 import DeviceManager from './components/DeviceManager';
 import GraphsWrapper from './components/GraphsWrapper';
 
@@ -15,16 +14,12 @@ function App() {
     setDevices(devices);
   };
 
+  const [collapsed, setCollapsed] = useState(undefined);
+
   return (
-    <div className="App">
-      <header>
-        <Container>
-          <h2>Sensor Suite</h2>
-        </Container></header>
-      <Row>
-        <DeviceManager devices={devices} loadDevices={loadDevices}/>
-        <GraphsWrapper devices={devices}/>
-      </Row>
+    <div className={`app ${typeof collapsed === 'undefined' ? '' : collapsed ? 'collapsed' : 'uncollapsed'}`}>
+      <DeviceManager devices={devices} loadDevices={loadDevices} collapsed={collapsed} onCollapsedChange={setCollapsed} />
+      <div className="data-views"><GraphsWrapper devices={devices}/></div>
     </div>
   );
 }

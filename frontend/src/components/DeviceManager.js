@@ -1,14 +1,19 @@
-import React, {Component} from 'react';
-import { Row, Col, Button } from 'reactstrap';
+import React, {Component, Fragment} from 'react';
 import { setDeviceOptions } from '../actions.js';
 import DeviceEntry from './DeviceEntry';
+
+import { H4, Button, ButtonGroup, Divider, Toaster } from "@blueprintjs/core";
 
 class DeviceManager extends Component {
 
   state = {
     visible: true,
-    deviceFilter: null
+    deviceFilter: null,
+    expanded: null,
   }
+
+  toaster = null;
+
   componentDidMount() {
     this.props.loadDevices();
   }
@@ -17,53 +22,66 @@ class DeviceManager extends Component {
   show = () => this.setState({visible: true});
 
   render() {
-    const { devices } = this.props;
-    const { deviceFilter } = this.state;
-    return this.state.visible ? (
-      <Col sm="2">
-        <Row>
-          <Col sm="9">
-          <h3>DeviceManager</h3>
-          </Col>
-          <Col sm="3">
-            <Button onClick={this.hide}>Hide</Button>
-          </Col>
-        </Row>
-        <Row>
-          <Col>
-            <Button onClick={this.handleFilterChange}>Show {deviceFilter || 'All'}</Button>
-          </Col>
-          <Col>
-            <Button onClick={this.props.loadDevices}>Reload</Button>
-          </Col>
-        </Row>
-        <Row>
-          {
-            devices.length > 0 ? devices
-           .filter( device => {
-             switch(deviceFilter) {
-             case 'subscribed':
-               return !!device.subscribed;
-             case 'unsubscribed':
-               return !device.subscribed;
-             default:
-               return true;
-             }
-           })
-           .map( device => (
-             <DeviceEntry key={device.key.replace('@', 'AT').replace(':','COLON')}
-                          device={device}
-                          onSaveOptions={this.handleChangeOptions}
-             />)
-               ) : <em>Loading Devices ....</em>
+    const { devices, collapsed, onCollapsedChange } = this.props;
+    const { deviceFilter, expanded } = this.state;
+    if (collapsed) {
+      return (
+        <div className="device-manager">
+          <Button className="device-manager-toggle" rightIcon="maximize" title="Restore Device Manager" onClick={() => onCollapsedChange(false)} />
+        </div>
+      );
+    }
+
+    let filteredDevices = devices.length > 0
+        ? devices.filter( device => {
+          switch(deviceFilter) {
+          case 'subscribed':
+            return !!device.subscribed;
+          case 'unsubscribed':
+            return !device.subscribed;
+          default:
+            return true;
           }
-        </Row>
-      </Col>
-    ) : (
-      <Col sm="1">
-      <Button onClick={this.show}>Device Manager</Button>
-      </Col>
+        })
+        : null;
+
+    return (
+      <div className="device-manager">
+        <Button style={{float: 'left'}} className="device-manager-toggle" title="Minimize" icon="minimize" onClick={() => onCollapsedChange(true)} />
+        <Button style={{float: 'right', margin: '0.5em'}} onClick={this.props.loadDevices} icon="refresh" title="Refresh device list"></Button>
+        <H4>Device Manager</H4>
+        <ButtonGroup fill>
+          <Button onClick={() => this.setState({deviceFilter: null})} icon="filter-list" active={!deviceFilter}>All</Button>
+          <Button onClick={() => this.setState({deviceFilter: 'subscribed'})} icon="filter-keep" active={deviceFilter === 'subscribed'}>
+            Subscribed
+          </Button>
+          <Button onClick={() => this.setState({deviceFilter: 'unsubscribed'})} icon="filter-remove" active={deviceFilter === 'unsubscribed'}>Unsubscribed</Button>
+        </ButtonGroup>
+        <Toaster ref={ref => this.toaster = ref} />
+        <div className="device-list">
+          {
+            filteredDevices ? filteredDevices.map( (device, i) => (
+             <Fragment key={device.key.replace('@', 'AT').replace(':','COLON')}>
+               {i > 0 && <Divider />}
+               <DeviceEntry
+                 device={device}
+                 expanded={expanded === device.key}
+                 onToast={this.handleToast}
+                 onExpand={this.handleExpand}
+                 onSaveOptions={this.handleChangeOptions}
+               />
+             </Fragment>
+            )) : <em>Loading Devices ....</em>
+          }
+        </div>
+      </div>
     );
+  }
+
+  handleToast = toast => this.toaster.show(toast);
+
+  handleExpand = key => {
+    this.setState({ expanded: key });
   }
 
   handleFilterChange = () => {
