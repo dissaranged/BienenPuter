@@ -61,7 +61,8 @@
 }
 
 .device-manager > h4 {
-    padding: 0.5em 0 0 0.7em;
+    padding-top: 0.6em;
+    text-align: center;
 }
 
 .data-views {
@@ -101,8 +102,16 @@
     border-radius: 1em;
 }
 
+.device-manager-toggle, .device-manager-refresh {
+    margin-top: 0.5em;
+}
+
 .device-manager-toggle {
-    margin: 0.5em;
+    float: left;
+}
+
+.device-manager-refresh {
+    float: right;
 }
 
 /* .App { */

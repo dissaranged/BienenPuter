@@ -27,7 +27,12 @@ class DeviceManager extends Component {
     if (collapsed) {
       return (
         <div className="device-manager">
-          <Button className="device-manager-toggle" rightIcon="maximize" title="Restore Device Manager" onClick={() => onCollapsedChange(false)} />
+          <Button
+            className="device-manager-toggle"
+            icon="menu-open"
+            title="Restore Device Manager"
+            onClick={() => onCollapsedChange(false)}
+          />
         </div>
       );
     }
@@ -47,8 +52,18 @@ class DeviceManager extends Component {
 
     return (
       <div className="device-manager">
-        <Button style={{float: 'left'}} className="device-manager-toggle" title="Minimize" icon="minimize" onClick={() => onCollapsedChange(true)} />
-        <Button style={{float: 'right', margin: '0.5em'}} onClick={this.props.loadDevices} icon="refresh" title="Refresh device list"></Button>
+        <Button
+          className="device-manager-toggle"
+          icon="menu-closed"
+          title="Minimize"
+          onClick={() => onCollapsedChange(true)}
+        />
+        <Button
+          className="device-manager-refresh"
+          icon="refresh"
+          title="Refresh device list"
+          onClick={this.props.loadDevices}
+        />
         <H4>Device Manager</H4>
         <ButtonGroup fill>
           <Button onClick={() => this.setState({deviceFilter: null})} icon="filter-list" active={!deviceFilter}>All</Button>
