@@ -53,6 +53,7 @@
     border-right: solid 1px #ccc;
     grid-column-start: sidebar-start;
     padding: 0 5px;
+    min-width: 350px;
 }
 
 .app.collapsed > .device-manager {

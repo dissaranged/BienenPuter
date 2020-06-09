@@ -65,7 +65,9 @@ class DeviceEntry extends Component {
                 </table>
               )} />
               <Tab id="data" title={<><Icon icon="bring-data"/> Data</>} panel={
-                <Pre>{JSON.stringify(this.props.device, null, 2)}</Pre>
+                <div style={{height: '10em'}}>
+                  <Pre style={{overflow: 'auto', height: '100%'}}>{JSON.stringify(this.props.device, null, 2)}</Pre>
+                </div>
               } />
               <Tab id="settings" title={<><Icon icon="settings"/> Settings</>} panel={(
                 <Fragment>
@@ -73,7 +75,7 @@ class DeviceEntry extends Component {
                     <input type="text" onChange={this.handleAliasChange} value={newAlias} placeholder="Alias" />
                   </FormGroup>
                   <FormGroup label="Color" inline>
-                    <input type="color" onChange={this.handleColorChange} value={newColor} placeholder="pick a color"/>
+                    <input type="color" onChange={this.handleColorChange} value={newColor} placeholder="Pick a Color"/>
                   </FormGroup>
                   {hasChanged && <Button onClick={this.handleOptionsSave}>Apply</Button>}
                 </Fragment>
