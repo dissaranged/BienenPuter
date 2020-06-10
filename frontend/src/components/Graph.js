@@ -66,8 +66,8 @@ export default class Graph extends Component {
   }
 
   componentWillReceiveProps(props) {
-    if(this.props.windowEnd !== props.windowEnd ||
-       this.props.windowStart !== props.windowStart && this.state.graph) {
+    if((this.props.windowEnd !== props.windowEnd ||
+       this.props.windowStart !== props.windowStart) && this.state.graph) {
       this.state.graph.setWindow(props.windowStart, props.windowEnd);
     }
   }
