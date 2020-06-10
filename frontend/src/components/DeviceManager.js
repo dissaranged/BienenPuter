@@ -2,7 +2,7 @@ import React, {Component, Fragment} from 'react';
 import { setDeviceOptions } from '../actions.js';
 import DeviceEntry from './DeviceEntry';
 
-import { H4, Button, ButtonGroup, Divider, Toaster, NonIdealState } from "@blueprintjs/core";
+import { H4, Button, ButtonGroup, Divider, NonIdealState } from "@blueprintjs/core";
 
 class DeviceManager extends Component {
 
@@ -11,8 +11,6 @@ class DeviceManager extends Component {
     deviceFilter: null,
     expanded: null,
   }
-
-  toaster = null;
 
   componentDidMount() {
     this.props.loadDevices();
@@ -72,7 +70,6 @@ class DeviceManager extends Component {
           </Button>
           <Button onClick={() => this.setState({deviceFilter: 'unsubscribed'})} icon="filter-remove" active={deviceFilter === 'unsubscribed'}>Unsubscribed</Button>
         </ButtonGroup>
-        <Toaster ref={ref => this.toaster = ref} />
         <div className="device-list">
           {
             filteredDevices && filteredDevices.length > 0
@@ -97,7 +94,7 @@ class DeviceManager extends Component {
     );
   }
 
-  handleToast = toast => this.toaster.show(toast);
+  handleToast = toast => this.props.toaster.show(toast);
 
   handleExpand = key => {
     this.setState({ expanded: key });

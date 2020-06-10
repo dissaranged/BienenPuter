@@ -4,6 +4,8 @@ import { getDevices } from './actions.js';
 import DeviceManager from './components/DeviceManager';
 import GraphsWrapper from './components/GraphsWrapper';
 
+import { Toaster } from "@blueprintjs/core";
+
 function App() {
   const [devices, setDevices] = useState([]);
   const loadDevices = async () => {
@@ -15,12 +17,16 @@ function App() {
   };
 
   const [collapsed, setCollapsed] = useState(undefined);
+  const [toaster, setToaster] = useState(null);
 
   return (
-    <div className={`app ${typeof collapsed === 'undefined' ? '' : collapsed ? 'collapsed' : 'uncollapsed'}`}>
-      <DeviceManager devices={devices} loadDevices={loadDevices} collapsed={collapsed} onCollapsedChange={setCollapsed} />
-      <div className="data-views"><GraphsWrapper devices={devices}/></div>
-    </div>
+    <>
+      <Toaster ref={setToaster} />
+      <div className={`app ${typeof collapsed === 'undefined' ? '' : collapsed ? 'collapsed' : 'uncollapsed'}`}>
+        <DeviceManager devices={devices} loadDevices={loadDevices} collapsed={collapsed} onCollapsedChange={setCollapsed} toaster={toaster} />
+        <div className="data-views"><GraphsWrapper devices={devices} toaster={toaster} /></div>
+      </div>
+    </>
   );
 }
 
