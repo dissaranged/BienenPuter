@@ -179,8 +179,9 @@ class GraphsWrapper extends Component {
   toggleAutoUpdate = () =>  this.setState({
     autoUpdate: this.state.autoUpdate ? 0 : 10
   }, this.doAutoUpdate);
+
   render() {
-    const { data, groups, autoUpdate } = this.state;
+    const { data, groups, autoUpdate, globalStart, globalEnd } = this.state;
     return (
       <div className="graph-wrapper">
         <div className="header">
@@ -201,13 +202,18 @@ class GraphsWrapper extends Component {
         </div>
         <div className="content">
           {Object.keys(data).length > 0 ? Object.entries(data).map( ([type, dataset]) => (
-            <Graph key={type} type={type} groups={groups} dataset={dataset} loadReadings={this.loadReadings}/>
-          )) : ( <em>Nothing to see :(</em> ) }
+            <Graph key={type} type={type} groups={groups} dataset={dataset} loadReadings={this.loadReadings} windowStart={globalStart} windowEnd={globalEnd} onGlobalRangeChange={this.handleGlobalRangeChange}/>
+          )) : ( <em>Nothing to see here</em> ) }
         </div>
       </div>
-          );
-    }
+    );
   }
+
+  handleGlobalRangeChange = ({end: globalEnd, start: globalStart}) => {
+    this.setState({globalEnd,globalStart});
+  }
+
+}
 
 
 export default GraphsWrapper;
