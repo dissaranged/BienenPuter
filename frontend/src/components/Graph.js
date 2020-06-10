@@ -1,6 +1,7 @@
 import React, {Component} from 'react';
 import { Graph2d } from 'vis-timeline/standalone';
 import Legend from './Legend';
+import { Button } from '@blueprintjs/core';
 
 const unit = {
   temperature: 'temperature in °C',
@@ -20,6 +21,7 @@ export default class Graph extends Component {
 
   state = {
     graph: null,
+    fit: false,
   }
 
   componentDidMount() {
@@ -43,6 +45,9 @@ export default class Graph extends Component {
     };
 
     const graph = new Graph2d(this.ref.current, dataset, groups, opts);
+
+    graph.on('rangechanged', this.handleRangeChanged);
+
     graph.on('click', console.log);
     // SUCKS BAD
     // let height = 400;
@@ -60,6 +65,10 @@ export default class Graph extends Component {
     this.setState({graph});
   }
 
+  componentWillUnmount() {
+    this.state.graph.off('rangechanged', this.handleRangeChanged);
+  }
+
   render() {
     const {type} = this.props;
     const { graph } = this.state;
@@ -67,10 +76,26 @@ export default class Graph extends Component {
       <div className="graph">
         <div className="header">
           <div className="title">{type}</div>
-          <Legend groups={this.props.groups} graph={graph}/>
+          <div>
+            <Button
+              style={{float: 'right'}}
+              title="Fit"
+              icon="zoom-to-fit"
+              onClick={this.handleFit}
+            />
+            <Legend groups={this.props.groups} graph={graph} />
+          </div>
         </div>
         <div ref={this.ref} />
       </div>
     );
+  }
+
+  handleRangeChanged = (...args) => {
+    console.log('range changed', args);
+  }
+
+  handleFit = () => {
+    this.state.graph.fit();
   }
 }
