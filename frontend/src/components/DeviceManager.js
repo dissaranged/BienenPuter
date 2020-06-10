@@ -2,7 +2,7 @@ import React, {Component, Fragment} from 'react';
 import { setDeviceOptions } from '../actions.js';
 import DeviceEntry from './DeviceEntry';
 
-import { H4, Button, ButtonGroup, Divider, Toaster } from "@blueprintjs/core";
+import { H4, Button, ButtonGroup, Divider, Toaster, NonIdealState } from "@blueprintjs/core";
 
 class DeviceManager extends Component {
 
@@ -37,7 +37,7 @@ class DeviceManager extends Component {
       );
     }
 
-    let filteredDevices = devices.length > 0
+    let filteredDevices = devices
         ? devices.filter( device => {
           switch(deviceFilter) {
           case 'subscribed':
@@ -75,18 +75,22 @@ class DeviceManager extends Component {
         <Toaster ref={ref => this.toaster = ref} />
         <div className="device-list">
           {
-            filteredDevices ? filteredDevices.map( (device, i) => (
-             <Fragment key={device.key.replace('@', 'AT').replace(':','COLON')}>
-               {i > 0 && <Divider />}
-               <DeviceEntry
-                 device={device}
-                 expanded={expanded === device.key}
-                 onToast={this.handleToast}
-                 onExpand={this.handleExpand}
-                 onSaveOptions={this.handleChangeOptions}
-               />
-             </Fragment>
-            )) : <em>Loading Devices ....</em>
+            filteredDevices && filteredDevices.length > 0
+              ? filteredDevices.map( (device, i) => (
+                <Fragment key={device.key.replace('@', 'AT').replace(':','COLON')}>
+                  {i > 0 && <Divider />}
+                  <DeviceEntry
+                    device={device}
+                    expanded={expanded === device.key}
+                    onToast={this.handleToast}
+                    onExpand={this.handleExpand}
+                    onSaveOptions={this.handleChangeOptions}
+                  />
+                </Fragment>
+              ))
+              : filteredDevices
+              ? <NonIdealState title="No Device found" icon="cell-tower" />
+              : <em>Loading Devices ....</em>
           }
         </div>
       </div>
