@@ -1,0 +1,36 @@
+#!/usr/bin/env node
+
+const db = require('../redis');
+db.setup();
+main();
+
+async function main() {
+  const keys = await db.redis.keys('*');
+  if (keys.length === 0) {
+    console.log('Database already cleared!');
+    process.exit(0);
+  } else {
+    console.log(`About to delete ${keys.length} keys. Are you sure?\nEnter 'yes' to continue, anything else to abort.`)
+    process.stdin.resume();
+    process.stdin.on('data', data => {
+      const chunk = String(data);
+      if (chunk.match(/^yes\n/i)) {
+        doReset(keys);
+      } else if (chunk.indexOf('\n') > -1) {
+        abort();
+      }
+    });
+    process.stdin.on('close', abort);
+  }
+}
+
+function abort() {
+  console.log('Aborted.');
+  process.exit(1);
+}
+
+async function doReset(keys) {
+  await Promise.all(keys.map(key => db.redis.del(key)));
+  console.log('Database cleared.');
+  process.exit(0);
+}
