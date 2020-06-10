@@ -5,7 +5,7 @@ import { getReadings } from '../actions';
 import moment from 'moment';
 import Graph from './Graph';
 
-import { H4, Button, Tooltip } from "@blueprintjs/core";
+import { H4, Button, Tooltip, Spinner } from "@blueprintjs/core";
 
 function FtoC (f) {
   return (f - 32) * 5 / 9;
@@ -157,13 +157,14 @@ class GraphsWrapper extends Component {
 
   updateReadings = async () => {
     const { lastUpdate: since, devices } = this.state;
-    this.setState({lastUpdate: Math.floor(Date.now()/1000)});
+    this.setState({lastUpdate: Math.floor(Date.now()/1000), refreshInProgress: true});
     const readings = await Promise.all(
       Object.keys(devices).map(
         device => getReadings(device, { since}).then(this.handleRawReadings)
       )
     );
     console.log(readings.reduce( (sum, i) => sum+=i.length, 0), ' new items since ', new Date(since* 1000));
+    this.setState({refreshInProgress: false});
     this.doAutoUpdate();
   }
 
@@ -181,7 +182,7 @@ class GraphsWrapper extends Component {
   }, this.doAutoUpdate);
 
   render() {
-    const { data, groups, autoUpdate, globalStart, globalEnd } = this.state;
+    const { data, groups, autoUpdate, globalStart, globalEnd, refreshInProgress } = this.state;
     return (
       <div className="graph-wrapper">
         <div className="header">
@@ -192,7 +193,7 @@ class GraphsWrapper extends Component {
             >
               <Button
                 active={!!autoUpdate}
-                icon="automatic-updates"
+                icon={refreshInProgress ? <Spinner size={Spinner.SIZE_SMALL} /> : "automatic-updates"}
                 onClick={this.toggleAutoUpdate}
               >
                 {autoUpdate ? 'Updates automatically' : 'Enable automatic update'}
