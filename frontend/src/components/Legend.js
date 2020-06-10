@@ -29,7 +29,7 @@ export default class Legend extends Component {
     }
     let visible = !this.state.hidden[group.id];
     return (
-      <div onClick={this.handleToggleGroup(group.id)}>
+      <div onClick={this.handleToggleGroup(group.id)} key={group.id}>
         {icon} {visible ? <span>{group.content}</span> : <del>{group.content}</del>}
       </div>
     );
