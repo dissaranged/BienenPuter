@@ -5,7 +5,7 @@ import { getReadings } from '../actions';
 import moment from 'moment';
 import Graph from './Graph';
 
-import { H4, Button, Tooltip, Spinner } from "@blueprintjs/core";
+import { H4, Button, Tooltip, Spinner, ProgressBar } from "@blueprintjs/core";
 
 function FtoC (f) {
   return (f - 32) * 5 / 9;
@@ -146,6 +146,7 @@ class GraphsWrapper extends Component {
 
   loadReadings = async (options) => {
     const {devices} = this.state;
+    const toastKey = this.props.toaster.show({ icon: 'cloud-update', message: <ProgressBar />, timeout: 0 });
     await Promise.all(
       Object.keys(devices)
         .map( async device => {
@@ -153,6 +154,7 @@ class GraphsWrapper extends Component {
           this.handleReadings(device, readings);
         })
     );
+    this.props.toaster.dismiss(toastKey);
   }
 
   updateReadings = async () => {
