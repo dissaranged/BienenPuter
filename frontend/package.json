@@ -13,7 +13,6 @@
     "react": "^16.13.1",
     "react-dom": "^16.13.1",
     "react-scripts": "3.4.1",
-    "reactstrap": "^8.4.1",
     "vis-data": "^6.5.3",
     "vis-timeline": "^7.3.6"
   },

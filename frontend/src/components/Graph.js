@@ -21,7 +21,8 @@ export default class Graph extends Component {
 
   state = {
     graph: null,
-    fit: false,
+    since: null,
+    until: null,
   }
 
   componentDidMount() {
@@ -45,9 +46,9 @@ export default class Graph extends Component {
     };
 
     const graph = new Graph2d(this.ref.current, dataset, groups, opts);
-
+    console.log(dataset)
+    this.setState({since: new Date(Date.now()-1000*60*60), until: new Date()});
     graph.on('rangechanged', this.handleRangeChanged);
-
     graph.on('click', console.log);
     // SUCKS BAD
     // let height = 400;
@@ -91,8 +92,26 @@ export default class Graph extends Component {
     );
   }
 
-  handleRangeChanged = (...args) => {
-    console.log('range changed', args);
+  handleRangeChanged = (event) => {
+    console.log('range changed', event);
+    const {start, end } = event;
+    const {since, until} = this.state;
+    if(start < since) {
+      this.props.loadReadings({
+        since: Math.floor(Date.parse(start) /1000),
+        until: Math.floor(Date.parse(since) /1000),
+        perPage: -1
+      });
+      this.setState({since: start});
+    }
+    if(end > until) {
+      this.props.loadReadings({
+        since: Math.floor(Date.parse(until) /1000),
+        until: Math.floor(Date.parse(end) /1000),
+        perPage: -1
+      });
+      this.setState({until: end});
+    }
   }
 
   handleFit = () => {

@@ -40,7 +40,7 @@ class GraphsWrapper extends Component {
 
   componentDidUpdate( prevProps, prevState) {
     if(this.state.goFetch) {
-      this.loadReadings();
+      this.createGroups();
     }
   }
 
@@ -71,7 +71,7 @@ class GraphsWrapper extends Component {
       const {time, temperature_C, humidity, temperature_F} = sample;
       const x = moment(time);
       if (typeof temperature_C !== 'undefined') {
-        temperatures.push({x, y: temperature_C.average, group: key},
+        temperatures.push({ x, y: temperature_C.average, group: key},
                           {x, y: temperature_C.min, group: `min-${key}`},
                           {x, y: temperature_C.max, group: `max-${key}`});
       } else if (typeof temperature_F  !== 'undefined') {
@@ -92,7 +92,7 @@ class GraphsWrapper extends Component {
     return readings;
   }
 
-  async  loadReadings() {
+  async  createGroups() {
     const {devices, groups} = this.state;
     const existing = groups.clear();
     Object.keys(devices).forEach((key) => {
@@ -137,11 +137,22 @@ class GraphsWrapper extends Component {
       Object.keys(devices)
         .filter(device => !existing.includes(device))
         .map( async device => {
-          const readings = await getReadings(device, {type: '6m'});
+          const readings = await getReadings(device, {type: '6m', perPage: -1, since: Math.floor(Date.now()/1000) -60*60 });
           this.handleReadings(device, readings);
         })
     );
     this.doAutoUpdate();
+  }
+
+  loadReadings = async (options) => {
+    const {devices} = this.state;
+    await Promise.all(
+      Object.keys(devices)
+        .map( async device => {
+          const readings = await getReadings(device, {...options, type: '6m'});
+          this.handleReadings(device, readings);
+        })
+    );
   }
 
   updateReadings = async () => {
@@ -190,7 +201,7 @@ class GraphsWrapper extends Component {
         </div>
         <div className="content">
           {Object.keys(data).length > 0 ? Object.entries(data).map( ([type, dataset]) => (
-            <Graph key={type} type={type} groups={groups} dataset={dataset} />
+            <Graph key={type} type={type} groups={groups} dataset={dataset} loadReadings={this.loadReadings}/>
           )) : ( <em>Nothing to see :(</em> ) }
         </div>
       </div>

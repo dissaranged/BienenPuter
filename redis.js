@@ -138,7 +138,7 @@ const db = {
       total,
       perPage: count,
       pageOffset: offset,
-      data: result.map(item => JSON.parse(item))};
+      data: result ? result.map(item => JSON.parse(item)) : []};
   },
 
   async createIndex(device, {since, until}) {
