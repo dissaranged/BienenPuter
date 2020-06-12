@@ -32,3 +32,12 @@ export async function getReadings (device, options) {
 export async function setDeviceOptions (device, options) {
   await saveFetch(`${BASE}/device/${device}?${qs.stringify(options)}`, { method: 'PUT' });
 }
+
+export async function getMeasurements({ device, field, since, until, window }) {
+  if (!device || !field || !(since instanceof Date) || !(until instanceof Date) || !window) {
+    console.log('getMeasurements(', arguments[0], ')');
+    throw new Error("Invalid parameters passed to `getMeasurements`");
+  }
+  const response = await fetch(`${BASE}/measurements/${device}/${field}/${since.toISOString()}/${until.toISOString()}/${window}`);
+  return response.json();
+}

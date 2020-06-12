@@ -61,6 +61,19 @@ const db = {
     return db.redis;
   },
 
+  async readingsInBatches(callback) {
+    await Promise.all((await client.keys('readings.*')).map(async key => {
+      let cursor = '0';
+      do {
+        const [newCursor, batch] = await client.zscan([key, cursor]);
+        cursor = newCursor;
+        await callback(batch
+                       .map(raw => JSON.parse(raw))
+                       .filter(value => typeof value === 'object'));
+      } while (cursor !== '0');
+    }));
+  },
+
   async storeReading (data) {
     console.log('storeing :', data);
     const { key } = data;

@@ -1,5 +1,6 @@
 const { plugins: { queryParser, serveStaticFiles } } = require('restify');
 const db = require('./redis');
+const measurements = require('./measurements');
 
 function finalize(f) {
   return async function(req, res, next) {
@@ -37,6 +38,10 @@ function routes (server) {
     };
     const result = await db.getReadings(opts);
     res.send(200, result.data, {'x-total': result.total, 'x-per-page': result.perPage, 'x-page-offset': result.pageOffset}); // do not like this, default perPage is now here and in db.getReadings
+  }));
+
+  server.get('/measurements/:device/:field/:since/:until/:window', finalize(async function(req, res, next) {
+    res.send(200, await measurements.query(req.params));
   }));
 
   server.get('/frontend/*', serveStaticFiles('./frontend/build/'));

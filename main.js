@@ -2,7 +2,9 @@ const restify = require('restify');
 const routes = require('./routes');
 const rtl = require('./rtl_client');
 const db = require('./redis');
+const measurements = require('./measurements');
 db.setup();
+measurements.setup();
 
 var server = restify.createServer();
 rtl.start();

@@ -42,7 +42,19 @@ const utils = {
       [key]: utils.attemptJsonParse(value)
     }), {});
   },
-  RAW_SENSOR_NAMES: ['temperature_C', 'temperature_F', 'humidity']
+  RAW_SENSOR_NAMES: ['temperature_C', 'temperature_F', 'humidity'],
+
+  // Turns a `reading` (as stored in redis) into a `measurement` (as stored in influx)
+  readingToMeasurement(reading) {
+    return {
+      measurement: 'weather',
+      tags: { device: reading.key },
+      fields: utils.RAW_SENSOR_NAMES
+        .reduce((fields, name) => reading.hasOwnProperty(name) ? ({ ...fields, [name]: reading[name] }) : fields, {}),
+      timestamp: Date.parse(reading.time),
+    };
+  },
+
 };
 
 module.exports = utils;

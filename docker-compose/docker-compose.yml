@@ -1,0 +1,24 @@
+version: '3.3'
+
+volumes:
+  influxdb-data:
+
+services:
+
+  # Documentation for this is here:
+  # https://v2.docs.influxdata.com/v2.0/get-started/#start-with-influxdb-oss
+  influxdb:
+    image: quay.io/influxdb/influxdb:2.0.0-beta
+
+    command:
+    # Prevents influxdb from "phoning home" telemetry data:
+    - --reporting-disabled
+
+    volumes:
+    # Data seems to be stored in `/root/.influxdbv2`. This is not documented anywhere,
+    # so we may find it changes when 2.0 goes out of beta (1.* stored data in /var/lib/influxdb):
+    - influxdb-data:/root/.influxdbv2
+
+    ports:
+    # Port for API & also UI:
+    - "19999:9999"

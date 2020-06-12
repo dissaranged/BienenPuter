@@ -1,7 +1,7 @@
 import React, {Component} from 'react';
 import { DataSet } from 'vis-timeline/standalone';
 import deepEqual from 'fast-deep-equal';
-import { getReadings } from '../actions';
+import { getReadings, getMeasurements } from '../actions';
 import moment from 'moment';
 import Graph from './Graph';
 
@@ -20,8 +20,9 @@ class GraphsWrapper extends Component {
       humidity: new DataSet(),
     },
     groups: new DataSet(),
-    autoUpdate: 10,
+    autoUpdate: 0,
     goFetch: false,
+    measurements: {},
   };
 
   static getDerivedStateFromProps(props, state) {
@@ -205,15 +206,38 @@ class GraphsWrapper extends Component {
         </div>
         <div className="content">
           {Object.keys(data).length > 0 ? Object.entries(data).map( ([type, dataset]) => (
-            <Graph key={type} type={type} groups={groups} dataset={dataset} loadReadings={this.loadReadings} windowStart={globalStart} windowEnd={globalEnd} onGlobalRangeChange={this.handleGlobalRangeChange}/>
+            <Graph
+              key={type}
+              type={type}
+              groups={groups}
+              dataset={dataset}
+              loadReadings={this.loadReadings}
+              windowStart={globalStart}
+              windowEnd={globalEnd}
+              onGlobalRangeChange={this.handleGlobalRangeChange}
+              measurements={this.state.measurements[type]}
+              getMeasurements={this.makeGetMeasurementsHandler(type)}
+            />
           )) : ( <em>Nothing to see here</em> ) }
         </div>
       </div>
     );
   }
 
-  handleGlobalRangeChange = ({end: globalEnd, start: globalStart}) => {
-    this.setState({globalEnd,globalStart});
+  handleGlobalRangeChange = ({end: globalEnd, start: globalStart, byUser}) => {
+    if (byUser) {
+      this.setState({globalEnd,globalStart});
+    }
+  }
+
+  makeGetMeasurementsHandler = type => async query => {
+    const measurements = await getMeasurements(query);
+    this.setState({
+      measurements: {
+        ...this.state.measurements,
+        [type]: measurements,
+      },
+    });
   }
 
 }
