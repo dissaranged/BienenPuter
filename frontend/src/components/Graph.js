@@ -22,12 +22,10 @@ export default class Graph extends Component {
   state = {
     graph: null,
     locked: false,
-    since: null,
-    until: null,
   }
 
   componentDidMount() {
-    const { groups, dataset, type } = this.props;
+    const { groups, dataset, type, window: {start, end} } = this.props;
     const opts = {
       defaultGroup: 'ungrouped',
       legend: false,
@@ -44,9 +42,9 @@ export default class Graph extends Component {
       },
       clickToUse: true,
       height: 400,
+      start, end
     };
     const graph = new Graph2d(this.ref.current, dataset, groups, opts);
-    this.setState({since: new Date(Date.now()-1000*60*60), until: new Date()});
     graph.on('rangechanged', this.handleRangeChanged);
     graph.on('click', console.log);
     // SUCKS BAD
@@ -66,9 +64,9 @@ export default class Graph extends Component {
   }
 
   componentWillReceiveProps(props) {
-    if((this.props.windowEnd !== props.windowEnd ||
-       this.props.windowStart !== props.windowStart) && this.state.graph) {
-      this.state.graph.setWindow(props.windowStart, props.windowEnd);
+    if((this.props.window.end !== props.window.end ||
+       this.props.window.start !== props.window.start) && this.state.graph && this.state.locked) {
+      this.state.graph.setWindow(props.window.start, props.window.end);
     }
   }
 
@@ -77,7 +75,7 @@ export default class Graph extends Component {
   }
 
   render() {
-    const {type} = this.props;
+    const { type } = this.props;
     const { graph, locked } = this.state;
     return (
       <div className="graph">
@@ -106,27 +104,10 @@ export default class Graph extends Component {
 
   handleRangeChanged = (event) => {
     console.log('range changed', event);
-    const {start, end } = event;
-    const {since, until, locked} = this.state;
-    if(start < since) {
-      this.props.loadReadings({
-        since: Math.floor(Date.parse(start) /1000),
-        until: Math.floor(Date.parse(since) /1000),
-        perPage: -1
-      });
-      this.setState({since: start});
-    }
-    if(end > until) {
-      this.props.loadReadings({
-        since: Math.floor(Date.parse(until) /1000),
-        until: Math.floor(Date.parse(end) /1000),
-        perPage: -1
-      });
-      this.setState({until: end});
-    }
-
+    const {locked} = this.state;
+    this.props.onRangeChange(event);
     if(locked) {
-      this.props.onGlobalRangeChange(event);
+      this.props.onWindowChange(event);
     }
   }
 

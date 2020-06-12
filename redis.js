@@ -134,11 +134,12 @@ const db = {
     chain.zcount(fieldName, newerThan, olderThan);
     chain.zrevrangebyscore(fieldName,  olderThan, newerThan, 'LIMIT', offset, count);
     const [total, result] = await batch(chain);
+    if(result instanceof Error) throw result; // [TODO] hacky
     return {
       total,
       perPage: count,
       pageOffset: offset,
-      data: result ? result.map(item => JSON.parse(item)) : []};
+      data: result ? result.map(item => JSON.parse(item)) : []}; // this if should be handled by the error handling above
   },
 
   async createIndex(device, {since, until}) {

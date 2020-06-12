@@ -24,7 +24,7 @@ export async function getDevices () {
 export async function getReadings (device, options) {
   const response = await fetch(`${BASE}/device/${device}?${qs.stringify(options)}`);
   if (response.status === 404) { return []; }
-  if(response.statis >= 400) throw new Error();
+  if(response.status >= 400) throw new Error();
   const data = await response.json();
   return data;
 }
