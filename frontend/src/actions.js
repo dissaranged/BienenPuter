@@ -1,5 +1,5 @@
 import qs from 'qs';
-const BASE = 'http://localhost:8080';
+const BASE = 'http://'+ window.location.host.split(':')[0] +':8080';
 
 async function saveFetch(path, options) {
   const response = await fetch(path, options);
