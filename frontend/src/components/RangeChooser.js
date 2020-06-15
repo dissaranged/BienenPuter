@@ -15,8 +15,10 @@ export default class RangeChooser extends Component {
   }
 
   componentWillReceiveProps(props) {
-    const {range:{min, max}} = this.props;
-    this.setState({min, max, editing: false});
+    const {range:{min, max}} = props;
+    if(this.props.range.min !== min || this.props.range.max !== max) {
+      this.setState({min, max, editing: false});
+    }
   }
 
   render() {
