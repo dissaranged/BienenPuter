@@ -1,9 +1,15 @@
 import React, {Component} from 'react';
 import { Graph2d } from 'vis-timeline/standalone';
 import Legend from './Legend';
+import RangeChooser from './RangeChooser';
 import { Button } from '@blueprintjs/core';
 
 const unit = {
+  temperature: '°C',
+  humidity: '%',
+};
+
+const unitDesc = {
   temperature: 'temperature in °C',
   humidity: 'humidity in %',
 };
@@ -20,6 +26,7 @@ export default class Graph extends Component {
   }
 
   state = {
+    dataRange: {min: null, max: null},
     graph: null,
     locked: false,
   }
@@ -36,7 +43,7 @@ export default class Graph extends Component {
       dataAxis: {
         showMinorLabels: true,
         left : {
-          title: {text: unit[type]},
+          title: {text: unitDesc[type]},
           range: range[type],
         },
       },
@@ -60,7 +67,7 @@ export default class Graph extends Component {
     //   }
     // });
 
-    this.setState({graph});
+    this.setState({graph, dataRange: range[type]});
   }
 
   componentWillReceiveProps(props) {
@@ -76,12 +83,18 @@ export default class Graph extends Component {
 
   render() {
     const { type } = this.props;
-    const { graph, locked } = this.state;
+    const { graph, locked, dataRange } = this.state;
     return (
       <div className="graph">
         <div className="header">
           <div className="title">{type}</div>
           <div>
+            <RangeChooser
+              range={dataRange}
+              unit={unit[type]}
+              onSubmit={this.handleDataRangeChange}
+              style={{float: 'left'}}
+            />
             <Button
               style={{float: 'right'}}
               title="Linked"
@@ -103,12 +116,16 @@ export default class Graph extends Component {
   }
 
   handleRangeChanged = (event) => {
-    console.log('range changed', event);
     const {locked} = this.state;
     this.props.onRangeChange(event);
     if(locked) {
       this.props.onWindowChange(event);
     }
+  }
+
+  handleDataRangeChange = ({min, max}) => {
+    this.setState({dataRange: {min, max}});
+    this.state.graph.setOptions({dataAxis: {left: {range: {min, max}}}});
   }
 
   handleFit = () => {
