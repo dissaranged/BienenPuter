@@ -1,4 +1,16 @@
 const redis = require('redis');
+const tsCommands = [
+  'ts.create', 'ts.alter',
+  'ts.add', 'ts.madd',
+  'ts.incrby', 'ts.decrby',
+  'ts.createrule', 'ts.deleterule',
+  'ts.range', 'ts.revrange', 'ts.mrange', 'ts.mrevrange',
+  'ts.get', 'ts.mget',
+  'ts.info',
+].map( command => {
+  redis.add_command(command);
+  return command.replace('.', '_');
+});
 const { NotFoundError } = require('restify-errors');
 const { promisify } = require('util');
 const { toName, fromRedisResult, RAW_SENSOR_NAMES } = require('./utils');
@@ -50,7 +62,8 @@ const db = {
         'set', 'get', 'mget',
         'hset', 'hmset', 'hget', 'hgetall',
         'zadd', 'zrangebyscore', 'zscan',
-        'sadd', 'srem', 'smembers'
+        'sadd', 'srem', 'smembers',
+        ...tsCommands,
       ].forEach(name => {
         client[`${name}Sync`] = client[name];
         client[name] = promisify(client[name]).bind(client);
