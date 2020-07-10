@@ -3,35 +3,40 @@
 const fs = require('fs');
 const db = require('../redis');
 const { toName } = require('../utils');
-db.setup();
-main(...process.argv.slice(2));
+db.setup()
+main(...process.argv.slice(2))
+  .catch(console.log)
+  .then( () =>  process.exit(0) );
 
 async function main(path) {
   if (!path) {
     console.log('Usage: script/load-fixture <path-to-json>');
     process.exit(1);
   }
-  const readings = JSON.parse(fs.readFileSync(path));
+  const readings = JSON.parse(fs.readFileSync(path))
+        .sort( ({time:a}, {time:b}) => new Date(a) - new Date(b) );
   console.log(`Writing ${readings.length} readings...`);
   let since = Number.MAX_SAFE_INTEGER;
   let until = 0;
   let keys = {};
-  await Promise.all(readings.map(async reading => {
+  await readings.reduce( async (promise, reading) => {
+    await promise;
     const time = Math.floor(Date.parse(reading.time) / 1000.0);
     since = Math.min(since, time);
     until = Math.max(until, time);
     if (!keys[reading.key]) {
       keys[reading.key] = true;
-      await db.redis.hmset(toName(reading.key, 'device'),
-                           'latest', JSON.stringify(reading),
-                           'key', reading.key);
+      console.log(reading)
+      await db.redis.hmset(
+        toName(reading.key, 'device'),
+        'latest', JSON.stringify(reading),
+        'key', reading.key,
+        'subscribed', true,
+      );
+      await db.subscribe(reading.key)
     }
-    return db.redis.zadd(toName(reading.key, 'readings'), time, JSON.stringify(reading));
-  }));
-  await Promise.all(Object.keys(keys).map(key => {
-    console.log(`Creating index for '${key}' from ${since} to ${until}...`);
-    return db.createIndex(key, { since, until });
-  }));
+    return db.storeReading(reading);
+  }, Promise.resolve());
+
   console.log('Done.');
-  process.exit(0);
 }

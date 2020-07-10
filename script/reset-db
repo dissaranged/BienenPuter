@@ -30,7 +30,7 @@ function abort() {
 }
 
 async function doReset(keys) {
-  await Promise.all(keys.map(key => db.redis.del(key)));
+  await db.redis.flushdb();
   console.log('Database cleared.');
   process.exit(0);
 }
