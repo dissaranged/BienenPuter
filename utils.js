@@ -4,13 +4,13 @@ const utils = {
     return (typeof value === 'string' || value instanceof String);
   },
 
-  toName(device, type) {
+  toName(device, type, data) {
     const name = escape(device);
     switch(type){
     case '6m':
       return `6m.${name}`;
     case 'readings':
-      return `readings.${name}`;
+      return `readings.${name}${data? '.'+ data : ''}`;
     case 'device':
     case undefined:
       return `device.${name}`;
@@ -42,6 +42,11 @@ const utils = {
       [key]: utils.attemptJsonParse(value)
     }), {});
   },
+
+  toObject(list) {
+    return list.reduce((acc, [key, val]) => ({...acc, [key]: val}), {});
+  },
+
   RAW_SENSOR_NAMES: ['temperature_C', 'temperature_F', 'humidity']
 };
 

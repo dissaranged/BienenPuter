@@ -1,4 +1,5 @@
 const chai = require('chai');
+const qs = require('qs');
 const { expect } = chai;
 const restify = require('restify');
 const routes = require('../routes');
@@ -95,106 +96,164 @@ describe('Routes', () => {
         subscribed: true
       }));
     });
+
+    it('creates ts series on subscription');
   });
 
-  describe('GET /device/:key', () => {
-    let readings, now;
+  describe('store', ()=> {
+    const devices = {
+      [exampleDevice.latest.key]: exampleDevice,
+      'Model1:123@2': {
+        latest: {
+          temperature_C: 23,
+          humidity: 12,
+        }
+      },
+      Model2: {
+        subscribed: true,
+        latest: {
+          temperature_C: 44
+        }
+      },
+      'Model2@1': {
+        alias: 'empty',
+        latest: {
+          humidity: 80
+        }
+      }
+    };
+    const time = new Date();
+
+    beforeEach(async ()=> {
+      expect(
+        await Promise.all(Object.entries(devices).map(
+          ([name, values]) => db.hsetObject(toName(name, 'device'), values)
+        ))
+      ).to.deep.equal(['OK', 'OK', 'OK', 'OK']);
+      expect(
+        await chai.request(server).put('/device/Model2@1?subscribed=true')
+      ).to.have.status(200);
+      expect(
+        await chai.request(server).put('/device/Model1:123@2?subscribed=true')
+      ).to.have.status(200);
+    });
+    it('will store subscribed devices', async () => {
+      expect(
+        await chai.request(server).post('/store').send({
+          time: time,
+          temperature_C: 23,
+          humidity: 12,
+          key: 'Model1:123@2'
+        })
+      ).to.have.status(200);
+      expect(
+        await db.redis.ts_mrange(0, Date.now(), 'FILTER', 'readings=true')
+      ).to.deep.equal([
+        ["readings.Model1%3A123@2.humidity", [],
+          [
+            [time.valueOf(),"12",]
+          ]
+        ],
+        [
+          "readings.Model1%3A123@2.temperature_C",  [],
+          [
+            [time.valueOf(), "23"]
+          ]
+        ],
+        [ "readings.Model2@1.humidity", [], [] ]
+      ]);
+    });
+  });
+
+  describe('readings', () => {
+    async function createDevice(key, obj) {
+      await db.hsetObject(toName(key, 'device'), obj);
+      await chai.request(server).put(`/device/${key}?subscribed=true`);
+    }
+    const devices = {
+      sensor1: {latest: {key: 'sensor1', temperature_C: 0}},
+      sensor2: {latest: {key: 'sensor2', temperature_C: 0, humidity: 0}},
+      sensor3: {latest: {key: 'sensor3', humidity: 0}},
+    };
+    const time = new Date('1-1-2000');
     beforeEach(async () => {
-      readings = [];
-      const commands = [];
-      now = Math.floor(Date.now()/1000);
-      for(let c = 0; c < 1000; c++) {
-        const item = {
-          ...exampleDevice.latest,
-          time: (new Date((now-c*6)*1000)).toISOString(),
-          temperature_C: c%80,
-        };
-        readings.push(item);
-        commands.push(
-          now-c*6,
-          JSON.stringify(item),
+      await Promise.all(
+        Object.entries(devices).map(
+          ([key, obj]) => createDevice(key,obj)
+        ));
+      const promises = [];
+      for( let i = 0; i <= 50; i++) {
+        Object.keys(devices).slice(0,2).map(
+          (key, index) => promises.push(
+            chai.request(server).post('/store').send({
+              time: new Date(Date.parse(time)+i*1000), key,
+              temperature_C: 20+10*Math.sin(i +index *2),
+            }))
+        );
+        Object.keys(devices).slice(1).forEach(
+            (key, index) => promises.push(
+              chai.request(server).post('/store').send({
+                time: new Date(Date.parse(time)+i*1000), key,
+                humidity: 50+ 50* Math.cos(i +index *2),
+              }))
         );
       }
-      await redis.zadd(toName(exampleDevice.key, 'readings'), commands);
+      await Promise.all(promises);
     });
 
-    describe('raw', () => {
-      describe('with pagination disabled', () => {
-        it('should return all raw readings', async () => {
-          const response = await chai.request(server).get(`/device/${exampleDevice.key}?perPage=-1`);
-          expect(response).to.have.status(200);
-          expect(response.body).to.have.deep.members(readings);
-        });
+    it('will return some data', async () => {
+      const response = await chai.request(server).get(`/readings`);
+      expect(response).to.have.status(200);
+      expect(response.body).to.have.keys('sensor1', 'sensor2', 'sensor3');
 
-        it('should return all raw readings after since', async () => {
-          const response = await chai.request(server).get(`/device/${exampleDevice.key}?since=${now-60}&perPage=-1`);
-          expect(response).to.have.status(200);
-          expect(response.body).to.have.length(11);
-          expect(response.body).to.have.deep.members(readings.filter(
-            item => Math.floor((new Date(item.time)).valueOf() / 1000) >= now - 60
-          ));
-        });
+    });
+    it('will apply a filter', async () => {
+      const response = await chai.request(server).get(`/readings?${qs.stringify({
+        filters:'key=sensor1'
+       })}`);
+      expect(response).to.have.status(200);
+      expect(response.body).to.have.keys('sensor1');
+    });
+    it('will apply two filters', async () => {
+      const response = await chai.request(server).get(`/readings?${qs.stringify({
+        filters:['key=sensor2', 'type=humidity']
+      })}`);
+      expect(response).to.have.status(200);
+      expect(response.body).to.have.keys('sensor2');
+      expect(response.body.sensor2).to.have.keys('humidity', 'key');
 
-        it('should return all raw readings older until', async () => {
-          const response = await chai.request(server).get(`/device/${exampleDevice.key}?until=${now-60}&perPage=-1`);
-          expect(response).to.have.status(200);
-          expect(response.body).to.have.length(990);
-          expect(response.body).to.have.deep.members(readings.filter(
-            item => Math.floor((new Date(item.time)).valueOf() / 1000) <= now - 60
-          ));
-        });
-
-        it('should return all raw readings between until and since', async () => {
-          const response = await chai.request(server).get(`/device/${exampleDevice.key}?since=${now-120}&until=${now-60}&perPage=-1`);
-          expect(response).to.have.status(200);
-          expect(response.body).to.have.length(11);
-          expect(response.body).to.have.deep.members(readings.filter(
-            item => Math.floor((new Date(item.time)).valueOf() / 1000) <= now - 60
-              && Math.floor((new Date(item.time)).valueOf() / 1000) >= now - 120
-          ));
-        });
-      });
-      describe('pagination', () => {
-        it('should be able to return paginated data', async () => {
-          const response = await chai.request(server).get(`/device/${exampleDevice.key}?perPage=100`);
-          expect(response).to.have.status(200);
-          expect(response.body).to.have.length(100);
-          expect(response.body).to.have.deep.members(readings.slice(0, 100));
-          expect(response.headers).to.deep.include({'x-total': '1000', 'x-per-page': '100', 'x-page-offset': '0'});
-        });
-
-        it('should return the correct data for the offset', async () => {
-          const response = await chai.request(server).get(`/device/${exampleDevice.key}?perPage=100&pageOffset=30`);
-          expect(response).to.have.status(200);
-          expect(response.body).to.have.length(100);
-          expect(response.body).to.have.deep.members(readings.slice(30, 130));
-          expect(response.headers).to.deep.include({'x-total': '1000', 'x-per-page': '100', 'x-page-offset': '30'});
-        });
-
-        it('should return all readings correctly', async () => {
-          const results = [];
-          for(let c = 0; c < 1000; c+=100) {
-            const response = await chai.request(server).get(`/device/${exampleDevice.key}?perPage=100&pageOffset=${c}`);
-            results.push.apply(results, response.body);
-          }
-          expect(results).to.have.length(1000);
-          expect(results).to.have.deep.members(readings);
-
-        });
-      });
     });
 
-    describe('6m smaples', () => {
-      beforeEach(async () => {
-        await db.createIndex(exampleDevice.key, {since: now-6000, until: now});
-      });
-      it('should be able to return summaries', async () => {
-        const response = await chai.request(server).get(`/device/${exampleDevice.key}?type=6m`);
-        expect(response).to.have.status(200);
-        expect(response.body).to.have.length(Math.ceil(readings.length*6/360));
-        console.log(JSON.stringify(response.body[10], null,2), 'propper integrity check missing');
-        // expect(response.body).to.have.deep.members([]);
-      });
+    it('can do aggregations', async () => {
+      const response = await chai.request(server).get(`/readings?${qs.stringify({
+        aggregation: ['avg', 5000],
+        filter: ['key=sensor2']
+       })}`);
+      expect(response).to.have.status(200);
+      expect(response.body.sensor2.humidity).to.have.length(11);
     });
+
+    it('can produce samples', async () => {
+      const response = await chai.request(server).get(`/samples?${qs.stringify({
+        timeBucket: 50000,
+       })}`);
+      expect(response).to.have.status(200);
+      expect(response.body).to.have.keys('sensor1', 'sensor2', 'sensor3');
+      expect(response.body.sensor2).to.have.keys('humidity', 'temperature_C');
+      expect(response.body.sensor2.humidity).to.have.keys('min', 'max', 'avg');
+    });
+
+    it('can produce samples and filter', async () => {
+      const response = await chai.request(server).get(`/samples?${qs.stringify({
+        timeBucket: 5000,
+        aggTypes: ['min', 'max', 'avg'],
+        filters: 'type=humidity'
+       })}`);
+      expect(response).to.have.status(200);
+      expect(response.body).to.have.keys('sensor2', 'sensor3');
+      expect(response.body.sensor2).to.have.keys('humidity');
+      expect(response.body.sensor2.humidity).to.have.keys('min', 'max', 'avg');
+    });
+
   });
 });

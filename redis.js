@@ -13,7 +13,7 @@ const tsCommands = [
 });
 const { NotFoundError } = require('restify-errors');
 const { promisify } = require('util');
-const { toName, fromRedisResult, RAW_SENSOR_NAMES } = require('./utils');
+const { toName, fromRedisResult, toObject, RAW_SENSOR_NAMES } = require('./utils');
 let client;
 
 function batch (chain) {
@@ -68,7 +68,6 @@ const db = {
         client[`${name}Sync`] = client[name];
         client[name] = promisify(client[name]).bind(client);
       });
-
       db.redis = client;
     }
     return db.redis;
@@ -80,11 +79,15 @@ const db = {
     const devName = toName(key, 'device');
     const subscribed = await client.hget(devName, 'subscribed');
     if (subscribed === 'true') {
-      const chain = client.multi()
-            .zadd(toName(key, 'readings'), Math.floor(new Date(data.time).valueOf() / 1000), JSON.stringify(data))
-            .hset(devName, 'latest', JSON.stringify(data));
-      await batch(chain);
-      return db.indexing(key);
+      const fields = RAW_SENSOR_NAMES.reduce((acc, fieldName) => data[fieldName] ? [...acc, toName(key, 'readings', fieldName), Date.parse(data.time), data[fieldName]] : acc, []);
+      const result = await db.redis.ts_madd(fields);
+      const errors = result.filter( item => (item instanceof Error));
+      if(errors.length > 0) { // [TODO] when errors occur for some keys it does not set latest but still the succeeding rest
+        console.log();
+        const error = new Error(['TS.MADD failed',...errors]);
+        error.meta = {errors, data};
+        throw error;
+      }
     }
     if(subscribed == null) {
       return client.hmset(devName, 'latest', JSON.stringify(data), 'key', key);
@@ -92,23 +95,24 @@ const db = {
     return client.hset(devName, 'latest', JSON.stringify(data));
   },
 
-  async indexing(key) {
-    const now = Date.now().valueOf();
-    const devName = toName(key, 'device');
-    const lastIndexRound = parseInt((await client.zrevrangebyscore(toName(key, '6m'), '+inf', 0, 'LIMIT', 0, 1, 'WITHSCORES') )[1])*1000
-          || parseInt((await client.zrangebyscore(toName(key, 'readings'), 0, '+inf', 'LIMIT', 0, 1, 'WITHSCORES') )[1])*1000
-          || now;
-    if(now >= lastIndexRound + 6*60*1000) { // create Index every full 6m
-      const nextIndexRound = now-(now % (6*60*1000)); // round down to last full 6m
-      await db.createIndex(key, {since: lastIndexRound/1000, until: nextIndexRound/1000});
-      await client.hset(devName, 'lastIndex', nextIndexRound);
-    };
+  async subscribe(key) {
+    const latest = await db.redis.hget(toName(key), 'latest').then(JSON.parse);
+    const chain = db.redis.multi();
+    RAW_SENSOR_NAMES.filter( name => Object.keys(latest).includes(name))
+      .forEach( fieldName => chain.ts_create(
+          toName(key, 'readings', fieldName),
+          'LABELS', 'key', key, 'type', fieldName, 'readings', true
+      ));
+    return await batch(chain);
   },
 
   async configureDevice(device, opts) {
     // console.log('configureDevice( ', device, opts, ' )');
     if(!await client.exists(toName(device, 'device'))) {
       throw new NotFoundError(`${device} not known`);
+    }
+    if(opts.subscribed) {
+      db.subscribe(device);
     }
     return client.hmset(
       toName(device),
@@ -118,7 +122,7 @@ const db = {
       ));
   },
 
-  async devices () {
+  async getDevices () {
     const devices = await client.keys('device.*');
     if (devices.length === 0) { return []; }
     const result = await batch(devices.reduce(
@@ -131,80 +135,50 @@ const db = {
     }), {});
   },
 
-  async getReadings (opts) {
-    const { device, since, until, type, perPage, pageOffset } = opts;
-    const fieldName = toName(device, type || 'readings');
-    if( !await client.exists(fieldName) ) {
-      throw new NotFoundError(`device not known: ${device}`);
-    }
-    const newerThan = since ? since.toString() : 0;
-    const olderThan = until ? until.toString() : '+inf';
-
-    const offset = pageOffset ? pageOffset.toString() : 0;
-    const count = perPage ? perPage.toString() : 100;
-
-    const chain = client.multi();
-    chain.zcount(fieldName, newerThan, olderThan);
-    chain.zrevrangebyscore(fieldName,  olderThan, newerThan, 'LIMIT', offset, count);
-    const [total, result] = await batch(chain);
-    if(result instanceof Error) throw result; // [TODO] hacky
-    return {
-      total,
-      perPage: count,
-      pageOffset: offset,
-      data: result ? result.map(item => JSON.parse(item)) : []}; // this if should be handled by the error handling above
+  async getReadings(opts) {
+    const {since, until, filters, aggregation} = opts;
+    const result = await db.redis.ts_mrange(
+      Date.parse(since) || 0,
+      Date.parse(until) || Date.now(),
+      ...(aggregation ? ['AGGREGATION', ...aggregation]: []),
+      'WITHLABELS',
+      'FILTER', 'readings=true', ...filters,
+    );
+    return result.reduce((acc, [, labelsList, readingsList]) => {
+      const labels = toObject(labelsList);
+      return {
+        ...acc,
+        [labels.key]: {
+          ...acc[labels.key],
+          key: labels.key,
+          [labels.type]: readingsList
+        }
+      };
+    }, {});
   },
 
-  async createIndex(device, {since, until}) {
-    const readingsFname = toName(device, 'readings');
-    const sampleFname = toName(device, '6m');
-    const chain = client.multi();
-    const intervall = 6*60; // sample intervall in secconds (6m)
-    for(let c = 0; since + c < until; c += intervall) {
-      const readings = await client.zrangebyscore(readingsFname, since + c, since + c +intervall);
-      if(readings.length === 0) {
-        const error = new NotFoundError(`try to index nonexisting readings: ${readingsFname} ${since+c} ${since+c+intervall}`);
-        console.log(error);
-        continue;
-      }
-      let sample = readings
-            .map(JSON.parse)
-            .reduce((sample, reading, index, data) => {
-              let weight = 0; // the following code sucks
-              if(data.length === 1){
-                  weight = 1;
-              } else if(index === 0) {
-                const start = new Date((since+c)*1000);
-                const end = new Date(data[index+1].time);
-                const now = new Date(reading.time);
-                weight = ((end-now)/2 + (now-start)) /1000 /intervall;
-              } else if(index === data.length -1) {
-                const start = new Date(data[index-1].time);
-                const end = new Date((since+c+intervall)*1000);
-                const now = new Date(reading.time);
-                weight = ((now-start)/2 + (end-now)) /1000 /intervall;
-              } else {
-                const start = new Date(data[index-1].time);
-                const end = new Date(data[index+1].time);
-                weight = (end -start) /2 /1000 /intervall;
-              } // until here
-              return RAW_SENSOR_NAMES
-                .filter((name) => Object.keys(reading).includes(name))
-                .reduce( (acc, name) => {
-                  const data = sample[name] || {average: 0, min: +Infinity, max: -Infinity};
-                  return {
-                    ...acc,
-                    [name]: {
-                      min: data.min < reading[name] ?  data.min : reading[name],
-                      max: data.max > reading[name] ? data.max : reading[name],
-                      average: data.average + (reading[name] * weight ),
-                    },
-                  };
-                }, sample);
-            },  {});
-      chain.zadd(sampleFname, since+c+intervall/2, JSON.stringify({ ...sample, time: (since+c+intervall/2.0)*1000}));
-    }
-    await batch(chain);
+  async samples (opts) {
+    const {since, until, filters, timeBucket, aggTypes} = opts;
+    const chain = db.redis.multi();
+    aggTypes.forEach( aggType => {
+      chain.ts_mrange(
+        Date.parse(since) || 0,
+        Date.parse(until) || Date.now(),
+        'AGGREGATION', aggType, timeBucket,
+        'WITHLABELS',
+        'FILTER', 'readings=true', ...filters,
+      );
+    });
+    const result = await batch(chain);
+    return result[0].reduce( (acc, [, labelsList], deviceIndex) => {
+      const labels = toObject(labelsList);
+      return {...acc, [labels.key]: {
+        ...acc[labels.key],
+        [labels.type]: toObject(aggTypes.map(
+          (aggType, aggIndex) => [aggType, result[aggIndex][deviceIndex][2]]
+        ))
+      }};
+    }, {});
   },
 
   batch,

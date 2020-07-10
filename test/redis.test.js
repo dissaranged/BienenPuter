@@ -46,7 +46,7 @@ describe('redis setup', () => {
       ).to.deep.equal([time.valueOf()+1, time.valueOf()]); // with ts_madd keys must exists
       expect(
         await redis.keys('*')
-      ).to.deep.equal(['example1', 'example2']);
+      ).to.have.members(['example1', 'example2']);
     });
   });
 });
