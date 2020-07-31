@@ -235,12 +235,13 @@ describe('Routes', () => {
 
     it('can produce samples', async () => {
       const response = await chai.request(server).get(`/samples?${qs.stringify({
-        timeBucket: 50000,
+        timeBucket: 10000,
        })}`);
       expect(response).to.have.status(200);
       expect(response.body).to.have.keys('sensor1', 'sensor2', 'sensor3');
       expect(response.body.sensor2).to.have.keys('humidity', 'temperature_C');
-      expect(response.body.sensor2.humidity).to.have.keys('min', 'max', 'avg');
+      expect(response.body.sensor2.humidity).to.have.length(6);
+      expect(response.body.sensor2.humidity[0]).to.have.keys('min', 'max', 'avg', 'time');
     });
 
     it('can produce samples and filter', async () => {
@@ -252,8 +253,9 @@ describe('Routes', () => {
       expect(response).to.have.status(200);
       expect(response.body).to.have.keys('sensor2', 'sensor3');
       expect(response.body.sensor2).to.have.keys('humidity');
-      expect(response.body.sensor2.humidity).to.have.keys('min', 'max', 'avg');
+      expect(response.body.sensor2.humidity).to.have.length(11);
+      expect(response.body.sensor2.humidity[0]).to.have.keys('min', 'max', 'avg', 'time');
     });
-
+    xit('can handle irregular data')
   });
 });

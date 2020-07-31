@@ -22,6 +22,7 @@ export async function getDevices () {
 }
 
 export async function getReadings (device, options) {
+  throw new Error('should not be calledd anymore');
   const response = await fetch(`${BASE}/device/${device}?${qs.stringify(options)}`);
   if (response.status === 404) { return []; }
   if(response.status >= 400) throw new Error();
@@ -31,4 +32,19 @@ export async function getReadings (device, options) {
 
 export async function setDeviceOptions (device, options) {
   await saveFetch(`${BASE}/device/${device}?${qs.stringify(options)}`, { method: 'PUT' });
+}
+
+export async function getMeasurements({ field, since, until, window }) {
+  if (!field || !(since instanceof Date) || !(until instanceof Date) || !window) {
+    console.log('getMeasurements(', arguments[0], ')');
+    throw new Error("Invalid parameters passed to `getMeasurements`");
+  }
+  const response = await fetch(`${BASE}/samples?${qs.stringify({
+    since, until,
+    timeBucket: 5000, // window is string
+    filters: [`type=temperature_C`],
+    aggTypes: ['min', 'max', 'avg']
+  })}`);
+  if(response.status >= 400) throw new Error(`fetch failed${(await response.json()).message}`);
+  return response.json();
 }

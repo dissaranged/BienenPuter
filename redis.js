@@ -170,14 +170,36 @@ const db = {
       );
     });
     const result = await batch(chain);
+    const errors = result.filter(item => item instanceof Error );
+    if(errors.length > 0) {
+      throw new Error(errors.join()); // [TODO] this should be done a bit better
+    }
+
+    // this code is very confusing
+    // tunring a list of the form
+    // [
+    //   [redings.device1, [...[label1, value]], [ ...[time, value] ]] // min
+    //   [redings.device1, [...[label1, value]], [ ...[time, value] ]] // max
+    // ]
+    // into
+    // { deviceKey : [...{time, min, max}]}
     return result[0].reduce( (acc, [, labelsList], deviceIndex) => {
       const labels = toObject(labelsList);
-      return {...acc, [labels.key]: {
-        ...acc[labels.key],
-        [labels.type]: toObject(aggTypes.map(
-          (aggType, aggIndex) => [aggType, result[aggIndex][deviceIndex][2]]
-        ))
-      }};
+      return result[0][0][2].reduce( (acc, [time], readingIndex) =>(
+        {
+          ...acc,
+          [labels.key]: {
+            ...acc[labels.key],
+            [labels.type]: [
+              ...((acc[labels.key]||{})[labels.type] || []),
+              {
+                ...toObject(aggTypes.map(
+                  (aggType, aggIndex) => [aggType, result[aggIndex][deviceIndex][2][readingIndex][1]]
+                )),
+                time
+              }
+            ]
+          }}), acc);
     }, {});
   },
 
