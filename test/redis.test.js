@@ -23,7 +23,9 @@ describe('redis setup', () => {
         "lastTimestamp", 0,
         "retentionTime", 0,
         "chunkCount", 1,
-        "maxSamplesPerChunk", 256,
+        "chunkSize", 4096,
+        "chunkType", "compressed",
+        "duplicatePolicy",  null,
         "labels", [
           [ "name", "sensorName" ],
           [ "unit", "C" ]
