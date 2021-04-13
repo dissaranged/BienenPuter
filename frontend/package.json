@@ -14,7 +14,7 @@
     "react-dom": "^16.13.1",
     "react-scripts": "3.4.1",
     "vis-data": "^6.5.3",
-    "vis-timeline": "^7.3.6"
+    "vis-timeline": "^7.4.4"
   },
   "scripts": {
     "start": "react-scripts start",
